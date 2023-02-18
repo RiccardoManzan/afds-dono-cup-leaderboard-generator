@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { async } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -11,11 +12,14 @@ export class AppComponent {
   RESULTS = 2;
   step: number = this.ENTRYPOINT;
 
+  isLoading: boolean = false;
+
   reload() {
     location.reload();
   }
 
   loadAndGenerate(){
-    alert("//TODO: GENERATE LEADERBOARD")
+    this.isLoading = true
+    setTimeout(() => alert("//TODO: GENERATE LEADERBOARD"), 50)
   }
 }
