@@ -1,0 +1,59 @@
+<nav
+  class="navbar bg-light rounded-3 m-3 border-bottom border-4 border-primary shadow"
+>
+  <div class="container-fluid">
+    <a class="navbar-brand d-inline-flex align-items-center" (click)="reload()">
+      <img src="../assets/logo.png" style="height: '60px'" />
+      <h1 class="h3">AFDS Dono Cup Leaderboard Generator</h1>
+    </a>
+    <a
+      href="http://gravatar.com/riccardomanzan"
+      class="btn btn-secondary me-4 rounded-pill"
+    >
+      <span>By Riccardo Manzan</span>
+      <img
+        src="https://gravatar.com/avatar/8e0e88a97fba70d752284fd35ae9b7d6"
+        class="img-thumbnail me-n4 ms-3 my-n4 rounded-circle border-secondary"
+        style="height: '60px'"
+      />
+    </a>
+  </div>
+</nav>
+
+<section class="container">
+  <div class="card">
+    <div class="card-body">
+      <div #begin="ngbCollapse" [ngbCollapse]="step != ENTRYPOINT">
+        <h5 class="card-title">Di cosa si tratta?</h5>
+        <p class="card-text">
+          Questo tool ti permette di calcolare la classifica della coppa dono
+          2023 a partire dalle estrazioni in formato xlsx:
+        </p>
+        <ul>
+          <li>Estrazione donazioni effettuate</li>
+          <li>Estrazione elenco donatori</li>
+          <li>Estrazione iscrizioni coppa dono</li>
+        </ul>
+        <div class="d-flex">
+          <button
+            class="btn btn-primary mx-auto rounded-pill"
+            type="button"
+            (click)="step = LOAD"
+          >
+            Inizia
+          </button>
+        </div>
+      </div>
+
+      <div #begin="ngbCollapse" [ngbCollapse]="step != LOAD">
+        <h5 class="card-title">Carica i file richiesti</h5>
+        <p>form placeholder</p>
+        <div class="d-flex">
+          <button class="btn btn-primary mx-auto rounded-pill">
+            Genera Leaderboard
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
