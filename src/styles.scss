@@ -316,3 +316,7 @@ $enable-negative-margins: true;
   @extend .shadow;
   @extend .border-0;
 }
+
+.clickable{
+  cursor: pointer;
+}

@@ -14,4 +14,8 @@ export class AppComponent {
   reload() {
     location.reload();
   }
+
+  loadAndGenerate(){
+    alert("//TODO: GENERATE LEADERBOARD")
+  }
 }
