@@ -308,8 +308,9 @@ $enable-negative-margins: true;
 
 @import 'bootstrap/scss/bootstrap';
 
-.btn {
+.btn, input{
   @extend .shadow-sm;
+  @extend .rounded-pill
 }
 
 .card{
