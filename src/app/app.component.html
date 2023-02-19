@@ -9,10 +9,7 @@
       <img src="../assets/logo.png" style="height: '60px'" />
       <h1 class="h3">AFDS Dono Cup Leaderboard Generator</h1>
     </a>
-    <a
-      href="http://gravatar.com/riccardomanzan"
-      class="btn btn-secondary me-4"
-    >
+    <a href="http://gravatar.com/riccardomanzan" class="btn btn-secondary me-4">
       <span>By Riccardo Manzan</span>
       <img
         src="https://gravatar.com/avatar/8e0e88a97fba70d752284fd35ae9b7d6"
@@ -59,22 +56,45 @@
       </div>
 
       <div #load="ngbCollapse" [ngbCollapse]="step != LOAD">
-        <form #loadForm="ngForm">
+        <form #f="ngForm" (submit)="loadAndGenerate(f)">
           <h5 class="card-title">Carica i file richiesti</h5>
 
           <div class="mb-3">
-            <label for="donationsFileInput" class="form-label">
-              Estrazione donazioni effettuate
+            <label for="donors" class="form-label">
+              Estrazione elenco donatori
             </label>
-            <input type="file" class="form-control" id="donationsFileInput" />
+            <input
+              type="file"
+              class="form-control"
+              ngModel
+              #donorsInput="ngModel"
+              name="donors"
+              id="donors"
+              accept=".xlsx"
+              (change)="onDonorsFileChange($event)"
+              required
+              [ngClass]="{'is-invalid': donorsInput.invalid && donorsInput.touched}"
+            />
+            <div class="invalid-feedback">Il campo è necessario</div>
           </div>
 
           <div class="mb-3">
-            <label for="donorsFileInput" class="form-label">
-              Estrazione elenco donatori
+            <label for="donations" class="form-label">
+              Estrazione donazioni effettuate
             </label>
-
-            <input type="file" class="form-control" id="donorsFileInput" />
+            <input
+              type="file"
+              class="form-control"
+              ngModel
+              #donationsInput="ngModel"
+              name="donations"
+              id="donations"
+              accept=".xlsx"
+              (change)="onDonationsFileChange($event)"
+              required
+              [ngClass]="{'is-invalid': donationsInput.invalid && donationsInput.touched}"
+            />
+            <div class="invalid-feedback">Il campo è necessario</div>
           </div>
 
           <div class="mb-3">
@@ -82,13 +102,25 @@
               Estrazione iscrizioni alla coppa dono
             </label>
 
-            <input type="file" class="form-control" id="donoCupSubscribers" />
+            <input
+              type="file"
+              class="form-control"
+              ngModel
+              #donoCupSubscribersInput="ngModel"
+              name="donoCupSubscribers"
+              id="donoCupSubscribers"
+              accept=".xlsx"
+              (change)="onDonoCupSubscribersFileChange($event)"
+              required
+              [ngClass]="{'is-invalid': donoCupSubscribersInput.invalid && donoCupSubscribersInput.touched}"
+            />
+            <div class="invalid-feedback">Il campo è necessario</div>
           </div>
 
           <div class="d-flex">
             <button
               class="btn btn-primary mx-auto"
-              (click)="loadAndGenerate()"
+              type="submit"
             >
               Genera Leaderboard
             </button>
