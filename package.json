@@ -23,6 +23,7 @@
     "ng-bootstrap": "^1.6.3",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
+    "xlsx-import": "^2.4.4",
     "zone.js": "~0.12.0"
   },
   "devDependencies": {
