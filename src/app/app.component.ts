@@ -1,12 +1,11 @@
 import { Component, TemplateRef, ViewChild } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-// import * as XLSX from 'xlsx';
-import { Workbook, Buffer } from 'exceljs';
+import { Workbook } from 'exceljs';
 import { IListSourceConfig } from 'xlsx-import/lib/config/IListSourceConfig';
 import { Importer } from 'xlsx-import/lib/Importer';
 import * as CodiceFiscaleUtils from '@marketto/codice-fiscale-utils';
-import { PLACE_SIZE } from '@marketto/codice-fiscale-utils/src/const/cf-offsets.const';
+import writeXlsxFile from 'write-excel-file';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -195,7 +194,72 @@ export class AppComponent {
       //First the ones with bigger donation score.
 
       this.step = this.RESULTS;
-      this.isLoading = false
+      this.isLoading = false;
+    } catch (ex) {
+      console.error(ex);
+      this.showError(ex);
+      this.isLoading = false;
+    }
+  }
+
+  async downloadFullLeaderboard() {
+    try {
+      writeXlsxFile(
+        this.leaderboard.map((ts, index) => ({
+          position: index + 1,
+          ...ts,
+        })),
+        {
+          fileName: 'leaderboard.xlsx',
+          schema: [
+            {
+              column: 'Position',
+              type: Number,
+              value: (ts) => ts.position,
+              width: 8,
+            },
+            {
+              column: 'Squadra',
+              type: String,
+              value: (ts) => ts.name,
+              width: this.leaderboard.reduce(
+                (acc, ts) =>{ console.log((ts.name.length > acc ? ts.name.length : acc)); return (ts.name.length > acc ? ts.name.length : acc)},
+                7
+              ) + 5,
+            },
+            {
+              column: 'N. donazioni sangue intero',
+              type: Number,
+              value: (ts) => ts.entireBloodDonationsCount,
+              width: 26,
+            },
+            {
+              column: 'N. donazione plasma da aferesi',
+              type: Number,
+              value: (ts) => ts.plasmaDonationsCount,
+              width: 30,
+            },
+            {
+              column: 'N. altre donazioni',
+              type: Number,
+              value: (ts) => ts.otherDonationsCount,
+              width: 18,
+            },
+            {
+              column: 'Punteggio da donazioni',
+              type: Number,
+              value: (ts) => ts.donationsScore,
+              width: 22,
+            },
+            {
+              column: 'Donatori under 25',
+              type: Number,
+              value: (ts) => ts.donorsUnder25Count,
+              width: 17,
+            },
+          ],
+        }
+      );
     } catch (ex) {
       console.error(ex);
       this.showError(ex);
