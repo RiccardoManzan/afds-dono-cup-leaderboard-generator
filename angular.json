@@ -36,6 +36,7 @@
           },
           "configurations": {
             "production": {
+              "baseHref": "/afds-dono-cup-leaderboard-generator/",
               "budgets": [
                 {
                   "type": "initial",
