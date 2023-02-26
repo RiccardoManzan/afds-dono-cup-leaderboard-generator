@@ -6,6 +6,7 @@ import { Workbook, Buffer } from 'exceljs';
 import { IListSourceConfig } from 'xlsx-import/lib/config/IListSourceConfig';
 import { Importer } from 'xlsx-import/lib/Importer';
 import * as CodiceFiscaleUtils from '@marketto/codice-fiscale-utils';
+import { PLACE_SIZE } from '@marketto/codice-fiscale-utils/src/const/cf-offsets.const';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -23,6 +24,7 @@ export class AppComponent {
   donationsFile?: File;
   cupSubscribersFile?: File;
   error: string | any;
+  leaderboard: TeamScore[] | undefined;
 
   @ViewChild('errorModal') errorModal: TemplateRef<any> | undefined;
 
@@ -91,8 +93,8 @@ export class AppComponent {
           (donations: Donation[]) =>
             donations.filter(
               (d) =>
-                d.date.getTime() > this.startDate.getTime() &&
-                d.date.getTime() < this.startDate.getTime()
+                d.date.getTime() >= this.startDate.getTime() &&
+                d.date.getTime() <= this.endDate.getTime()
             )
         ),
         this.readFile(
@@ -100,13 +102,24 @@ export class AppComponent {
           config['cupSubscriptions']
         ) as Promise<CupSubscription[]>,
       ]);
-
+      console.log(donations.length);
       const leaderboardMap = donations.reduce(
-        (acc: LeaderboardMap, donation) => {
+        (acc: LeaderboardAcc, donation) => {
+          console.debug(
+            `CHECKING DONATION FOR ${donation.cardNumber} ${donation.date}`
+          );
           const sub = cupSubs.find((s) => s.cardNumber == donation.cardNumber);
+          console.debug(
+            sub
+              ? `found subscription for ${donation.cardNumber} with team ${sub.team}`
+              : `Subscription not found for ${donation.cardNumber}`
+          );
           if (!sub) return acc;
           const donor = donors.find((d) => d.cardNumber == donation.cardNumber);
           if (!donor) {
+            console.debug(
+              `donor not found for card number ${donation.cardNumber}`
+            );
             //TODO add to error file output
             return acc;
           }
@@ -118,6 +131,9 @@ export class AppComponent {
             !cfValidator.matchBirthDate(donor.birth) ||
             !cfValidator.matchGender(donor.sex);
           if (isCFNotConsistentWithDonor) {
+            console.debug(
+              `cf not consistent with donor for ${donor.cardNumber}`
+            );
             //TODO add to probably wrong user subscriptions
             return acc;
           }
@@ -128,7 +144,6 @@ export class AppComponent {
               plasmaDonationsCount: 0,
               otherDonationsCount: 0,
               donorsUnder25CardNumbers: new Set(),
-              donors18To25CardNumbers: new Set(),
             };
             teamScore = acc[sub.team];
           }
@@ -142,20 +157,45 @@ export class AppComponent {
             default:
               teamScore.otherDonationsCount++;
           }
-          if (donor.birth.getTime() < stringToDate('01/01/1998').getTime()) {
-            //under25
+          if (donor.birth.getTime() >= stringToDate('01/01/1998').getTime()) {
+            console.debug(`donor ${donor.cardNumber} is under 25`);
             teamScore.donorsUnder25CardNumbers.add(donor.cardNumber);
-            if (donor.birth.getTime() > stringToDate('01/01/2003').getTime()) {
-              //over18
-              teamScore.donors18To25CardNumbers.add(donor.cardNumber);
-            }
           }
           return acc;
         },
         {}
       );
 
-      console.log(leaderboardMap);
+      console.debug(leaderboardMap);
+
+      this.leaderboard = Object.entries(leaderboardMap)
+        .map((entry): TeamScore => {
+          const [
+            teamName,
+            {
+              entireBloodDonationsCount,
+              plasmaDonationsCount,
+              otherDonationsCount,
+              donorsUnder25CardNumbers,
+            },
+          ] = entry;
+          return {
+            name: teamName,
+            entireBloodDonationsCount: entireBloodDonationsCount,
+            plasmaDonationsCount: plasmaDonationsCount,
+            otherDonationsCount: otherDonationsCount,
+            donationsScore:
+              entireBloodDonationsCount * 1 +
+              plasmaDonationsCount * 2 +
+              otherDonationsCount * 2,
+            donorsUnder25Count: donorsUnder25CardNumbers.size,
+          };
+        })
+        .sort((t1, t2) => t2.donationsScore - t1.donationsScore);
+      //First the ones with bigger donation score.
+
+      this.step = this.RESULTS;
+      this.isLoading = false
     } catch (ex) {
       console.error(ex);
       this.showError(ex);
@@ -196,7 +236,7 @@ const config: { [key: string]: CustomConfig } = {
       {
         index: 3,
         key: 'date',
-        mapper: (v: string) => (v == 'Dt. Nasc.' ? v : stringToDate(v)),
+        mapper: (v: string) => (v == 'Data Donazione' ? v : stringToDate(v)),
       },
       { index: 8, key: 'type' },
     ],
@@ -262,13 +302,20 @@ type Result = {
   score: number;
 };
 
-type LeaderboardMap = { [key: string]: TeamScore };
-type TeamScore = {
+type LeaderboardAcc = { [key: string]: TeamScoreAcc };
+type TeamScoreAcc = {
   entireBloodDonationsCount: number;
   plasmaDonationsCount: number;
   otherDonationsCount: number;
   donorsUnder25CardNumbers: Set<string>;
-  donors18To25CardNumbers: Set<string>;
+};
+type TeamScore = {
+  name: string;
+  entireBloodDonationsCount: number;
+  plasmaDonationsCount: number;
+  otherDonationsCount: number;
+  donationsScore: number;
+  donorsUnder25Count: number;
 };
 
 function equalsByValue(obj1: any, obj2: any): boolean {
