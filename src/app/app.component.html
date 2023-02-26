@@ -149,10 +149,14 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let teamScore of leaderboard?.slice(0, 10) ?? []; index as i">
-              <th scope="row">{{ i + 1 }} <span *ngIf="i == 0">👑</span></th>
+            <tr
+              *ngFor="
+                let teamScore of leaderboard?.slice(0, 10) ?? [];
+                index as i
+              "
+            >
+              <th scope="row">{{ i + 1 }} <ng-template *ngIf="i == 0">👑</ng-template></th>
               <td>
-
                 {{ teamScore.name }}
               </td>
               <td>{{ teamScore.entireBloodDonationsCount }}</td>
@@ -163,6 +167,14 @@
             </tr>
           </tbody>
         </table>
+        <div class="d-flex">
+          <button
+            class="btn btn-primary mx-auto"
+            (click)="downloadFullLeaderboard()"
+          >
+            Scarica tutti
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -178,7 +190,7 @@
 </footer>
 
 <ng-template #errorModal let-modal>
-  <div class="modal-header">
+  <div class="modal-header border-0">
     <h4 class="modal-title" id="modal-basic-title">Oops!</h4>
     <button
       type="button"
@@ -188,13 +200,6 @@
     ></button>
   </div>
   <div class="modal-body">Qualcosa è andato storto: {{ error }}</div>
-  <div class="modal-footer">
-    <button
-      type="button"
-      class="btn btn-outline-dark"
-      (click)="modal.close('Save click')"
-    >
-      Save
-    </button>
+  <div class="modal-footer border-0">
   </div>
 </ng-template>
