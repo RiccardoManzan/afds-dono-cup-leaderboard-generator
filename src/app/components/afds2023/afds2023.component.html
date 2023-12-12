@@ -1,0 +1,121 @@
+<div #load="ngbCollapse" [ngbCollapse]="step != LOAD">
+  <form #f="ngForm" (submit)="loadAndGenerate(f)">
+    <h5 class="card-title">Seleziona i file richiesti</h5>
+
+    <div class="mb-3">
+      <label for="donors" class="form-label">
+        Estrazione elenco donatori
+      </label>
+      <input
+        type="file"
+        class="form-control"
+        ngModel
+        #donorsInput="ngModel"
+        name="donors"
+        id="donors"
+        accept=".xlsx"
+        (change)="onDonorsFileChange($event)"
+        required
+        [ngClass]="{
+          'is-invalid': donorsInput.invalid && donorsInput.touched
+        }"
+      />
+      <div class="invalid-feedback">Il campo è necessario</div>
+    </div>
+
+    <div class="mb-3">
+      <label for="donations" class="form-label">
+        Estrazione donazioni effettuate
+      </label>
+      <input
+        type="file"
+        class="form-control"
+        ngModel
+        #donationsInput="ngModel"
+        name="donations"
+        id="donations"
+        accept=".xlsx"
+        (change)="onDonationsFileChange($event)"
+        required
+        [ngClass]="{
+          'is-invalid': donationsInput.invalid && donationsInput.touched
+        }"
+      />
+      <div class="invalid-feedback">Il campo è necessario</div>
+    </div>
+
+    <div class="mb-3">
+      <label for="donoCupSubscribers" class="form-label">
+        Estrazione iscrizioni alla coppa dono
+      </label>
+
+      <input
+        type="file"
+        class="form-control"
+        ngModel
+        #donoCupSubscribersInput="ngModel"
+        name="donoCupSubscribers"
+        id="donoCupSubscribers"
+        accept=".xlsx"
+        (change)="onDonoCupSubscribersFileChange($event)"
+        required
+        [ngClass]="{
+          'is-invalid':
+            donoCupSubscribersInput.invalid &&
+            donoCupSubscribersInput.touched
+        }"
+      />
+      <div class="invalid-feedback">Il campo è necessario</div>
+    </div>
+
+    <div class="d-flex">
+      <button class="btn btn-primary mx-auto" type="submit">
+        Genera Leaderboard
+      </button>
+    </div>
+  </form>
+</div>
+
+<div #results="ngbCollapse" [ngbCollapse]="step != RESULTS">
+  <h5 class="card-title">Risultati</h5>
+
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col">Squadra</th>
+        <th scope="col"># Donazioni sangue intero</th>
+        <th scope="col"># Donazioni plasma da aferesi</th>
+        <th scope="col"># Altre donazioni</th>
+        <th scope="col">Punteggio</th>
+        <th scope="col">Partecipanti under 25</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr
+        *ngFor="
+          let teamScore of leaderboard?.slice(0, 10) ?? [];
+          index as i
+        "
+      >
+        <th scope="row">{{ i + 1 }} <ng-template *ngIf="i == 0">👑</ng-template></th>
+        <td>
+          {{ teamScore.name }}
+        </td>
+        <td>{{ teamScore.entireBloodDonationsCount }}</td>
+        <td>{{ teamScore.plasmaDonationsCount }}</td>
+        <td>{{ teamScore.otherDonationsCount }}</td>
+        <td>{{ teamScore.donationsScore }}</td>
+        <td>{{ teamScore.donorsUnder25Count }}</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="d-flex">
+    <button
+      class="btn btn-primary mx-auto"
+      (click)="downloadFullLeaderboard()"
+    >
+      Scarica tutti
+    </button>
+  </div>
+</div>

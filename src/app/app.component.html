@@ -6,16 +6,20 @@
       class="navbar-brand d-inline-flex align-items-center clickable"
       (click)="reload()"
     >
-      <img src="assets/logo.png" style="height: '60px'" />
-      <h1 class="h3">AFDS Dono Cup Leaderboard Generator</h1>
+      <img src="assets/logo.png" style="height: 60px"  alt="logo"/>
+      <h1 class="h3 m-0">
+        AFDS Dono Cup Leaderboard Generator
+        <span class="m-0" [ngbCollapse]="initiative == null" [horizontal]="true">| {{initiative}}</span>
+      </h1>
+
     </a>
     <a href="http://gravatar.com/riccardomanzan" class="btn btn-secondary me-4">
       <span>By Riccardo Manzan</span>
       <img
         src="https://gravatar.com/avatar/8e0e88a97fba70d752284fd35ae9b7d6"
         class="img-thumbnail me-n4 ms-3 my-n4 rounded-circle border-secondary"
-        style="height: '60px'"
-      />
+        style="height: 60px"
+       alt="gravatar"/>
     </a>
   </div>
 </nav>
@@ -33,151 +37,51 @@
         </div>
       </div>
 
-      <div #begin="ngbCollapse" [ngbCollapse]="step != ENTRYPOINT">
+      <div #begin="ngbCollapse" [ngbCollapse]="initiative != null">
         <h5 class="card-title">Di cosa si tratta?</h5>
         <p class="card-text">
-          Questo tool ti permette di calcolare la classifica della coppa dono
-          2023 a partire dalle estrazioni in formato xlsx:
+          Questo tool ti permette di calcolare la classifica della coppa dono a
+          partire da alcune estrazioni in formato xlsx
+          <br />
+          Seleziona l'iniziativa per cui calcolare la classifica
         </p>
-        <ul>
-          <li>Estrazione donazioni effettuate</li>
-          <li>Estrazione elenco donatori</li>
-          <li>Estrazione iscrizioni coppa dono</li>
-        </ul>
-        <div class="d-flex">
-          <button
-            class="btn btn-primary mx-auto"
-            type="button"
-            (click)="step = LOAD"
-          >
-            Inizia
-          </button>
-        </div>
-      </div>
-
-      <div #load="ngbCollapse" [ngbCollapse]="step != LOAD">
-        <form #f="ngForm" (submit)="loadAndGenerate(f)">
-          <h5 class="card-title">Seleziona i file richiesti</h5>
-
-          <div class="mb-3">
-            <label for="donors" class="form-label">
-              Estrazione elenco donatori
-            </label>
-            <input
-              type="file"
-              class="form-control"
-              ngModel
-              #donorsInput="ngModel"
-              name="donors"
-              id="donors"
-              accept=".xlsx"
-              (change)="onDonorsFileChange($event)"
-              required
-              [ngClass]="{
-                'is-invalid': donorsInput.invalid && donorsInput.touched
-              }"
-            />
-            <div class="invalid-feedback">Il campo è necessario</div>
-          </div>
-
-          <div class="mb-3">
-            <label for="donations" class="form-label">
-              Estrazione donazioni effettuate
-            </label>
-            <input
-              type="file"
-              class="form-control"
-              ngModel
-              #donationsInput="ngModel"
-              name="donations"
-              id="donations"
-              accept=".xlsx"
-              (change)="onDonationsFileChange($event)"
-              required
-              [ngClass]="{
-                'is-invalid': donationsInput.invalid && donationsInput.touched
-              }"
-            />
-            <div class="invalid-feedback">Il campo è necessario</div>
-          </div>
-
-          <div class="mb-3">
-            <label for="donoCupSubscribers" class="form-label">
-              Estrazione iscrizioni alla coppa dono
-            </label>
-
-            <input
-              type="file"
-              class="form-control"
-              ngModel
-              #donoCupSubscribersInput="ngModel"
-              name="donoCupSubscribers"
-              id="donoCupSubscribers"
-              accept=".xlsx"
-              (change)="onDonoCupSubscribersFileChange($event)"
-              required
-              [ngClass]="{
-                'is-invalid':
-                  donoCupSubscribersInput.invalid &&
-                  donoCupSubscribersInput.touched
-              }"
-            />
-            <div class="invalid-feedback">Il campo è necessario</div>
-          </div>
-
-          <div class="d-flex">
-            <button class="btn btn-primary mx-auto" type="submit">
-              Genera Leaderboard
+        <div class="row justify-content-evenly">
+          <div class="col-4">
+            <button
+              class="btn btn-primary btn-block w-100"
+              (click)="setInitiative('AFDVS2024')"
+            >
+              <h4>Coppa dono AFDVS 2024</h4>
             </button>
           </div>
-        </form>
-      </div>
-
-      <div #results="ngbCollapse" [ngbCollapse]="step != RESULTS">
-        <h5 class="card-title">Risultati</h5>
-
-        <table class="table table-striped">
-          <thead>
-            <tr>
-              <th scope="col">#</th>
-              <th scope="col">Squadra</th>
-              <th scope="col"># Donazioni sangue intero</th>
-              <th scope="col"># Donazioni plasma da aferesi</th>
-              <th scope="col"># Altre donazioni</th>
-              <th scope="col">Punteggio</th>
-              <th scope="col">Partecipanti under 25</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              *ngFor="
-                let teamScore of leaderboard?.slice(0, 10) ?? [];
-                index as i
-              "
+          <div class="col-4">
+            <button
+              class="btn btn-primary btn-block w-100"
+              (click)="setInitiative('AFDS2023')"
             >
-              <th scope="row">{{ i + 1 }} <ng-template *ngIf="i == 0">👑</ng-template></th>
-              <td>
-                {{ teamScore.name }}
-              </td>
-              <td>{{ teamScore.entireBloodDonationsCount }}</td>
-              <td>{{ teamScore.plasmaDonationsCount }}</td>
-              <td>{{ teamScore.otherDonationsCount }}</td>
-              <td>{{ teamScore.donationsScore }}</td>
-              <td>{{ teamScore.donorsUnder25Count }}</td>
-            </tr>
-          </tbody>
-        </table>
-        <div class="d-flex">
-          <button
-            class="btn btn-primary mx-auto"
-            (click)="downloadFullLeaderboard()"
-          >
-            Scarica tutti
-          </button>
+              <h4>Coppa dono AFDS 2023</h4>
+            </button>
+          </div>
         </div>
       </div>
+      <div
+      [ngbCollapse]="initiative != 'AFDVS2024'"
+      >
+          <app-afdvs2024
+          [showError]="showError"
+          [(isLoading)]="isLoading"
+          />
+      </div>
+      <div
+      [ngbCollapse]="initiative != 'AFDS2023'"
+      >
+          <app-afds2023
+          [showError]="showError"
+          [(isLoading)]="isLoading"
+          />
+      </div>
+      </div>
     </div>
-  </div>
 </section>
 
 <footer class="text-center small mt-auto mb-1">
@@ -200,6 +104,5 @@
     ></button>
   </div>
   <div class="modal-body">Qualcosa è andato storto: {{ error }}</div>
-  <div class="modal-footer border-0">
-  </div>
+  <div class="modal-footer border-0"></div>
 </ng-template>
