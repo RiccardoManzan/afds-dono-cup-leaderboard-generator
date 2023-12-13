@@ -39,10 +39,16 @@ export function mapUnlessEq<T>(header: string, mapper: ValueMapper<T>): ValueMap
   return (v: string) => (v == header ? v : mapper(v))
 }
 
-export function customDateMapper(dateString: string) {
-  console.debug(dateString)
-  const [day, month, year] = dateString.split('/');
-  return new Date([month, day, year].join('/'));
+export function customDateMapper(input: string) {
+  const [day, month, year] = input.split('/');
+  var date = new Date(Number(year), Number(month), Number(day));
+  if(isNaN(date.getTime())){
+    date = new Date(input)
+    if(isNaN(date.getTime())) {
+      console.warn(`cannot convert date ${input}`)
+    }
+  }
+  return date
 }
 
 export function customCellMapper(cell: string) {
