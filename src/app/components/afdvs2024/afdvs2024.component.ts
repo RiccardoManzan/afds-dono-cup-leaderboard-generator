@@ -1,10 +1,18 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { NgForm } from '@angular/forms';
-import { Workbook } from 'exceljs';
-import { IListSourceConfig } from 'xlsx-import/lib/config/IListSourceConfig';
-import { Importer } from 'xlsx-import/lib/Importer';
-import * as CodiceFiscaleUtils from '@marketto/codice-fiscale-utils';
 import writeXlsxFile from 'write-excel-file';
+import {
+  customCellMapper,
+  CustomConfig,
+  customDateMapper,
+  mapUnlessEq,
+  readFile,
+  trimMapper
+} from "../../utils/xls.utils";
+import { integerMapper } from "xlsx-import/lib/mappers";
+import { normalizeName } from "../../utils/misc.utils";
+
+const UNDER25_BIRTH_THRESHOLD = customDateMapper('01/01/1998');
 
 @Component({
   selector: 'app-afdvs2024',
@@ -17,7 +25,6 @@ export class Afdvs2024Component {
 
   step: number = this.LOAD;
 
-  donorsFile?: File;
   donationsFile?: File;
   cupSubscribersFile?: File;
   leaderboard: TeamScore[] | undefined;
@@ -26,50 +33,13 @@ export class Afdvs2024Component {
   @Input() isLoading: boolean;
   @Output() isLoadingChange = new EventEmitter<boolean>();
 
-
-  onDonorsFileChange(event: any) {
-    this.donorsFile = event.target.files[0];
-  }
   onDonationsFileChange(event: any) {
     this.donationsFile = event.target.files[0];
   }
+
   onDonoCupSubscribersFileChange(event: any) {
     this.cupSubscribersFile = event.target.files[0];
   }
-
-
-
-  readFile(file: File, config: CustomConfig) {
-    return new Promise<any[]>((res, rej) => {
-      let fileReader = new FileReader();
-      fileReader.onloadend = async (_) => {
-        try {
-          const wb = new Workbook();
-          await wb.xlsx.load(fileReader.result as ArrayBuffer);
-          const importer = new Importer(wb);
-          const items = importer.getAllItems(config);
-          const headers = items.shift();
-          console.debug(
-            headers,
-            config.headers,
-            equalsByValue(headers, config.headers)
-          );
-          if (!equalsByValue(headers, config.headers)) {
-            throw `Contenuto del file non valido`;
-          }
-          console.debug(items);
-          res(items);
-        } catch (ex) {
-          console.error(ex);
-          rej(`Errore durante la lettura del file ${config.name}: ${ex}`);
-        }
-      };
-      fileReader.readAsArrayBuffer(file);
-    });
-  }
-
-  startDate = stringToDate('01/02/2023');
-  endDate = stringToDate('30/06/2023');
 
   async loadAndGenerate(f: NgForm) {
     f.control.markAllAsTouched();
@@ -77,79 +47,61 @@ export class Afdvs2024Component {
     if (this.isLoading) return;
     this.isLoadingChange.emit(true);
     try {
-      const [donors, donations, cupSubs] = await Promise.all([
-        this.readFile(this.donorsFile!!, config['donors']) as Promise<Donor[]>,
-        this.readFile(this.donationsFile!!, config['donations']).then(
-          (donations: Donation[]) =>
-            donations.filter(
-              (d) =>
-                d.date.getTime() >= this.startDate.getTime() &&
-                d.date.getTime() <= this.endDate.getTime()
-            )
-        ),
-        this.readFile(
-          this.cupSubscribersFile!!,
-          config['cupSubscriptions']
-        ) as Promise<CupSubscription[]>,
+      const [donations, cupSubs]: [Donation[], CupSubscription[]] = await Promise.all([
+        readFile(this.donationsFile!!, config['donations']),
+        readFile(this.cupSubscribersFile!!, config['cupSubscriptions'])
       ]);
       console.log(donations.length);
       const leaderboardMap = donations.reduce(
         (acc: LeaderboardAcc, donation) => {
+
+          //Bonus 6 sostenitori under25 -> 30 punti // solo se ha già 40 punti
+          //ignora se trovi lo stesso cell in più squadre
+          //donazione 1 punto, 2 punti se under25
+          //conteggio sostenitori under25 x spareggio
+
+
           console.debug(
-            `CHECKING DONATION FOR ${donation.cardNumber} ${donation.date}`
+            `CHECKING DONATION FOR ${donation.name} ${donation.surname} ${donation.cell} ${donation.donationDate}`
           );
-          const sub = cupSubs.find((s) => s.cardNumber == donation.cardNumber);
+          const normalizedDonationName = normalizeName(donation.name)
+          const normalizedDonationSurname = normalizeName(donation.surname)
+          const subs = cupSubs.filter((s) =>
+              s.birth == donation.birth
+              && (
+                (normalizeName(s.name) == normalizedDonationName && normalizeName(s.surname) == normalizedDonationSurname)
+                || s.cell == donation.cell
+              )
+          );
+          if (subs.length > 1) {
+            console.warn(`Found multiple subscriptions for the donation ${JSON.stringify(donation)} : ${JSON.stringify(subs)}`)
+            //TODO: HANDLE THIS CASE BETTER: WE SHOULD WARN USER ABOUT THESE CASES
+            return acc
+          }
+          const sub = subs[0]
           console.debug(
             sub
-              ? `found subscription for ${donation.cardNumber} with team ${sub.team}`
-              : `Subscription not found for ${donation.cardNumber}`
+              ? `found subscription for ${donation.name} ${donation.surname} ${donation.cell} who donated in ${donation.donationDate} with team ${sub.team}`
+              : `Subscription not found for ${donation.name} ${donation.surname} ${donation.cell} who donated in ${donation.donationDate}`
           );
           if (!sub) return acc;
-          const donor = donors.find((d) => d.cardNumber == donation.cardNumber);
-          if (!donor) {
-            console.debug(
-              `donor not found for card number ${donation.cardNumber}`
-            );
-            //TODO add to error file output
-            return acc;
-          }
-          const cfValidator = CodiceFiscaleUtils.Validator.codiceFiscale(
-            sub.cf
-          );
-          //Note: Not checking name and lastname here as this would be more likely to fail. We've got already a decent logic to fight against fake subscriptions.
-          const isCFNotConsistentWithDonor =
-            !cfValidator.matchBirthDate(donor.birth) ||
-            !cfValidator.matchGender(donor.sex);
-          if (isCFNotConsistentWithDonor) {
-            console.debug(
-              `cf not consistent with donor for ${donor.cardNumber}`
-            );
-            //TODO add to probably wrong user subscriptions
-            return acc;
-          }
-          var teamScore = acc[sub.team];
-          if (!teamScore) {
+
+          if (!acc[sub.team]) {
             acc[sub.team] = {
-              entireBloodDonationsCount: 0,
-              plasmaDonationsCount: 0,
-              otherDonationsCount: 0,
-              donorsUnder25CardNumbers: new Set(),
+              over25BloodDonationsCount: 0,
+              under25BloodDonationsCount: 0,
+              donorsUnder25CellNumbers: new Set(),
             };
-            teamScore = acc[sub.team];
           }
-          switch (donation.type) {
-            case 'Sangue Intero':
-              teamScore.entireBloodDonationsCount++;
-              break;
-            case 'Plasma da aferesi':
-              teamScore.plasmaDonationsCount++;
-              break;
-            default:
-              teamScore.otherDonationsCount++;
-          }
-          if (donor.birth.getTime() >= stringToDate('01/01/1998').getTime()) {
-            console.debug(`donor ${donor.cardNumber} is under 25`);
-            teamScore.donorsUnder25CardNumbers.add(donor.cardNumber);
+          const teamScore = acc[sub.team];
+          if (donation.birth.getTime() >= UNDER25_BIRTH_THRESHOLD.getTime()) {
+            teamScore.under25BloodDonationsCount++;
+            // NOTE: This is not the best, but it should be sufficient if we consider donations export consistent:
+            //       a donor should not be able to figure in different subscriptions, even if the lookup is not strong
+            //       as I would like
+            teamScore.donorsUnder25CellNumbers.add(sub.cell);
+          } else {
+            teamScore.over25BloodDonationsCount++;
           }
           return acc;
         },
@@ -159,37 +111,34 @@ export class Afdvs2024Component {
       console.debug(leaderboardMap);
 
       this.leaderboard = Object.entries(leaderboardMap)
-        .map((entry): TeamScore => {
-          const [
-            teamName,
-            {
-              entireBloodDonationsCount,
-              plasmaDonationsCount,
-              otherDonationsCount,
-              donorsUnder25CardNumbers,
-            },
-          ] = entry;
-          return {
-            name: teamName,
-            entireBloodDonationsCount: entireBloodDonationsCount,
-            plasmaDonationsCount: plasmaDonationsCount,
-            otherDonationsCount: otherDonationsCount,
-            donationsScore:
-              entireBloodDonationsCount * 1 +
-              plasmaDonationsCount * 2 +
-              otherDonationsCount * 2,
-            donorsUnder25Count: donorsUnder25CardNumbers.size,
-          };
-        })
+        .map(
+          ([teamName, {
+            over25BloodDonationsCount,
+            under25BloodDonationsCount,
+            donorsUnder25CellNumbers
+          },]): TeamScore => {
+            // noinspection PointlessArithmeticExpressionJS
+            return {
+              name: teamName,
+              over25BloodDonationsCount: over25BloodDonationsCount,
+              under25BloodDonationsCount: under25BloodDonationsCount,
+
+              donationsScore:
+                over25BloodDonationsCount * 1 +
+                under25BloodDonationsCount * 2,
+              under25DonorsCount: donorsUnder25CellNumbers.size,
+            };
+          }
+        )
         .sort((t1, t2) => t2.donationsScore - t1.donationsScore);
       //First the ones with bigger donation score.
 
       this.step = this.RESULTS;
-    this.isLoadingChange.emit(false);
+      this.isLoadingChange.emit(false);
     } catch (ex) {
       console.error(ex);
       this.showError(ex);
-    this.isLoadingChange.emit(false);
+      this.isLoadingChange.emit(false);
     }
   }
 
@@ -214,27 +163,24 @@ export class Afdvs2024Component {
               type: String,
               value: (ts) => ts.name,
               width: this.leaderboard.reduce(
-                (acc, ts) =>{ console.log((ts.name.length > acc ? ts.name.length : acc)); return (ts.name.length > acc ? ts.name.length : acc)},
+                (acc, ts) => {
+                  console.log((ts.name.length > acc ? ts.name.length : acc));
+                  return (ts.name.length > acc ? ts.name.length : acc)
+                },
                 7
               ) + 5,
             },
             {
-              column: 'N. donazioni sangue intero',
+              column: 'N. donazioni over 25',
               type: Number,
-              value: (ts) => ts.entireBloodDonationsCount,
+              value: (ts) => ts.over25BloodDonationsCount,
               width: 26,
             },
             {
-              column: 'N. donazione plasma da aferesi',
+              column: 'N. donazioni under 25',
               type: Number,
-              value: (ts) => ts.plasmaDonationsCount,
-              width: 30,
-            },
-            {
-              column: 'N. altre donazioni',
-              type: Number,
-              value: (ts) => ts.otherDonationsCount,
-              width: 18,
+              value: (ts) => ts.under25BloodDonationsCount,
+              width: 21,
             },
             {
               column: 'Punteggio da donazioni',
@@ -243,10 +189,10 @@ export class Afdvs2024Component {
               width: 22,
             },
             {
-              column: 'Donatori under 25',
+              column: 'N. donatori under 25',
               type: Number,
-              value: (ts) => ts.donorsUnder25Count,
-              width: 17,
+              value: (ts) => ts.under25DonorsCount,
+              width: 20,
             },
           ],
         }
@@ -260,46 +206,26 @@ export class Afdvs2024Component {
 }
 
 const config: { [key: string]: CustomConfig } = {
-  donors: {
-    type: 'list',
-    worksheet: 'Sheet',
-    rowOffset: 0,
-    columns: [
-      { index: 1, key: 'cardNumber' },
-      { index: 2, key: 'nominative' },
-      { index: 3, key: 'sex' },
-      {
-        index: 4,
-        key: 'birth',
-        mapper: (v: string) => (v == 'Dt. Nasc.' ? v : stringToDate(v)),
-      },
-    ],
-    name: 'estrazione donatori',
-    headers: {
-      cardNumber: 'Num. Tess.',
-      nominative: 'Cognome e Nome',
-      sex: 'Sesso',
-      birth: 'Dt. Nasc.',
-    },
-  },
   donations: {
     type: 'list',
-    worksheet: 'Sheet',
+    worksheet: 'Foglio1',
     rowOffset: 0,
     columns: [
-      { index: 1, key: 'cardNumber' },
-      {
-        index: 3,
-        key: 'date',
-        mapper: (v: string) => (v == 'Data Donazione' ? v : stringToDate(v)),
-      },
-      { index: 8, key: 'type' },
+      {index: 1, key: 'donationDate', mapper: mapUnlessEq('Effettuata il', customDateMapper)},
+      {index: 2, key: 'birth', mapper: mapUnlessEq('D. Nascita', customDateMapper)},
+      {index: 3, key: 'surname', mapper: trimMapper},
+      {index: 4, key: 'name', mapper: trimMapper},
+      {index: 5, key: 'donationsCount', mapper: mapUnlessEq('N.Don.', integerMapper)},
+      {index: 6, key: 'cell', mapper: mapUnlessEq('Telefono Cel', customCellMapper)},
     ],
     name: 'estrazione donazioni',
     headers: {
-      cardNumber: 'Num. Tess.',
-      date: 'Data Donazione',
-      type: 'Tipo',
+      donationDate: 'Effettuata il',
+      birth: 'D. Nascita',
+      surname: 'Cognome',
+      name: 'Nome',
+      donationsCount: 'N.Don.',
+      cell: 'Telefono Cel',
     },
   },
   cupSubscriptions: {
@@ -307,77 +233,51 @@ const config: { [key: string]: CustomConfig } = {
     worksheet: 'Iscritti',
     rowOffset: 0,
     columns: [
-      { index: 1, key: 'Name' },
-      { index: 2, key: 'Surname' },
-      { index: 3, key: 'cardNumber' },
-      { index: 4, key: 'cf' },
-      { index: 7, key: 'team' },
+      {index: 1, key: 'name', mapper: trimMapper},
+      {index: 2, key: 'surname', mapper: trimMapper},
+      {index: 3, key: 'birth', mapper: mapUnlessEq('Data di Nascita', customDateMapper)},
+      {index: 4, key: 'cell', mapper: mapUnlessEq('Telefono', customCellMapper)},
+      {index: 5, key: 'team'},
     ],
     name: 'estrazione iscritti alla coppa',
     headers: {
-      Name: 'Nome',
-      Surname: 'Cognome',
-      cardNumber: 'Numero Tessera',
-      cf: 'Codice Fiscale',
+      name: 'Nome',
+      surname: 'Cognome',
+      birth: 'Data di Nascita',
+      cell: 'Telefono',
       team: 'Squadra',
     },
   },
 };
 
-type CustomConfig = {
-  name: string;
-  headers: any;
-} & IListSourceConfig;
-
-type Donor = {
-  cardNumber: string;
-  nominative: string;
-  sex: 'M' | 'F';
-  birth: Date;
-};
-
 type Donation = {
-  cardNumber: string;
-  date: Date;
-  type: 'Plasma da aferesi' | 'Sangue Intero' | string;
+  donationDate: Date
+  birth: Date
+  surname: string
+  name: string
+  donationsCount: number
+  cell: string;
 };
 
 type CupSubscription = {
-  Name: string;
-  Surname: string;
-  cardNumber: string;
-  cf: string;
+  name: string;
+  surname: string;
+  birth: Date
+  cell: string;
   team: string;
 };
 
 type LeaderboardAcc = { [key: string]: TeamScoreAcc };
 type TeamScoreAcc = {
-  entireBloodDonationsCount: number;
-  plasmaDonationsCount: number;
-  otherDonationsCount: number;
-  donorsUnder25CardNumbers: Set<string>;
+  over25BloodDonationsCount: number;
+  under25BloodDonationsCount: number;
+  donorsUnder25CellNumbers: Set<string>
 };
 type TeamScore = {
   name: string;
-  entireBloodDonationsCount: number;
-  plasmaDonationsCount: number;
-  otherDonationsCount: number;
+  over25BloodDonationsCount: number;
+  under25BloodDonationsCount: number;
   donationsScore: number;
-  donorsUnder25Count: number;
+  under25DonorsCount: number;
 };
-
-function equalsByValue(obj1: any, obj2: any): boolean {
-  const obj1Keys = Object.keys(obj1);
-  const obj2Keys = Object.keys(obj2);
-
-  return (
-    obj1Keys.length === obj2Keys.length &&
-    obj1Keys.every((key) => obj1[key] == obj2[key])
-  );
-}
-
-function stringToDate(dateString: string) {
-  const [day, month, year] = dateString.split('/');
-  return new Date([month, day, year].join('/'));
-}
 

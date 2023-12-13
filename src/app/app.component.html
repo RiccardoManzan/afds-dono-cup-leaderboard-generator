@@ -46,20 +46,20 @@
           Seleziona l'iniziativa per cui calcolare la classifica
         </p>
         <div class="row justify-content-evenly">
-          <div class="col-4">
+          <div class="col-5">
             <button
               class="btn btn-primary btn-block w-100"
               (click)="setInitiative('AFDVS2024')"
             >
-              <h4>Coppa dono AFDVS 2024</h4>
+              <h4 class="m-n1">Coppa Dono AFDVS 2024</h4>
             </button>
           </div>
-          <div class="col-4">
+          <div class="col-5">
             <button
-              class="btn btn-primary btn-block w-100"
+              class="btn btn-secondary btn-block w-100"
               (click)="setInitiative('AFDS2023')"
             >
-              <h4>Coppa dono AFDS 2023</h4>
+              <h4 class="m-n1">Coppa Dono AFDS Udine 2023</h4>
             </button>
           </div>
         </div>
@@ -68,7 +68,7 @@
       [ngbCollapse]="initiative != 'AFDVS2024'"
       >
           <app-afdvs2024
-          [showError]="showError"
+          [showError]="showError.bind(this)"
           [(isLoading)]="isLoading"
           />
       </div>
@@ -76,7 +76,7 @@
       [ngbCollapse]="initiative != 'AFDS2023'"
       >
           <app-afds2023
-          [showError]="showError"
+          [showError]="showError.bind(this)"
           [(isLoading)]="isLoading"
           />
       </div>

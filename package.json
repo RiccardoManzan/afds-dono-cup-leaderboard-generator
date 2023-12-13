@@ -25,7 +25,7 @@
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "write-excel-file": "^1.4.22",
-    "xlsx-import": "^2.4.4",
+    "xlsx-import": "^2.4.7",
     "zone.js": "~0.12.0"
   },
   "devDependencies": {

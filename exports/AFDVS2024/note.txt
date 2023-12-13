@@ -1,0 +1,27 @@
+# Donazioni
+
+Effettuata il           Date
+D. Nascita              Date
+Cognome                 <Case insensitive string - need to sanitize?>
+Nome                    <Case insensitive string - need to sanitize?>
+N.Don.                  <indifferente quindi stringa>
+Telefono Cel            string - need to sanitize spaces, hypens and national prefixes
+
+
+#iscritti alla coppa
+
+Nome                    <Case insensitive string>
+Cognome                 <Case insensitive string>
+Data di nascita         gg/mm/yyyy
+E-mail                  <whocares then string> - not sure if this is present ?!
+Telefono                string - need to sanitize spaces, hypens and national prefixes
+Squadra                 <Case insensitive string>
+
+
+#risultato
+
+Squadra
+Numero donazioni Sangue intero
+Numero donazioni Plasma
+Punteggio
+Numero persone sotto i 28 anni (che hanno donato o che sono iscritte?)

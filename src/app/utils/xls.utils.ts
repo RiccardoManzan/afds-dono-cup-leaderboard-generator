@@ -1,0 +1,63 @@
+import { Workbook } from "exceljs";
+import { Importer } from "xlsx-import/lib/Importer";
+import { equalsByValue } from "./misc.utils";
+import { IListSourceConfig } from "xlsx-import/lib/config/IListSourceConfig";
+import { ValueMapper } from "xlsx-import/lib/abstracts/ValueMapper";
+
+export function readFile(file: File, config: CustomConfig) {
+  return new Promise<any[]>((res, rej) => {
+    let fileReader = new FileReader();
+    fileReader.onloadend = async (e) => {
+      console.log(config.name, JSON.stringify(e))
+      try {
+        const wb = new Workbook();
+        await wb.xlsx.load(fileReader.result as ArrayBuffer);
+        const importer = new Importer(wb);
+        const items = importer.getAllItems(config);
+        const headers = items.shift();
+        if (!equalsByValue(headers, config.headers)) {
+          console.error(headers, config.headers)
+          throw `Contenuto del file non valido, gli header non corrispondono`;
+        }
+        console.debug(items);
+        res(items);
+      } catch (ex) {
+        console.error(ex);
+        rej(`Errore durante la lettura del file ${config.name}: ${ex}`);
+      }
+    };
+    fileReader.readAsArrayBuffer(file);
+  });
+}
+
+export type CustomConfig = {
+  name: string;
+  headers: any;
+} & IListSourceConfig;
+
+export function mapUnlessEq<T>(header: string, mapper: ValueMapper<T>): ValueMapper<T | string> {
+  return (v: string) => (v == header ? v : mapper(v))
+}
+
+export function customDateMapper(dateString: string) {
+  console.debug(dateString)
+  const [day, month, year] = dateString.split('/');
+  return new Date([month, day, year].join('/'));
+}
+
+export function customCellMapper(cell: string) {
+  const sanitized = cell
+    .replace(/[-\s/]/g,'')
+    .replace(/^((00)|(\+))39/g,'')
+  if (sanitized.match(/^\d{9,11}$/)) {
+    return sanitized
+  } else {
+    console.warn(`cannot sanitize cell ${cell}`)
+    return ""
+  }
+
+}
+
+export function trimMapper(str: string){
+  return str.trim()
+}
