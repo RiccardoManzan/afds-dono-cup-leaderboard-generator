@@ -8,7 +8,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 export class AppComponent {
   @ViewChild('errorModal') errorModal: TemplateRef<any> | undefined;
 
-  initiative: 'AFDS2023' | 'AFDVS2024' | null = null;
+  initiative: Initiative | null = null;
   error: string | any;
   isLoading: boolean = false;
 
@@ -23,7 +23,9 @@ export class AppComponent {
     this.modalService.open(this.errorModal);
   }
 
-  setInitiative(initiative: 'AFDS2023' | 'AFDVS2024') {
+  setInitiative(initiative: Initiative) {
     this.initiative = initiative;
   }
 }
+
+type Initiative = 'AFDS2023' | 'AFDVS2024' | 'AFDS2024';

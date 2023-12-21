@@ -7,11 +7,11 @@ import * as CodiceFiscaleUtils from '@marketto/codice-fiscale-utils';
 import writeXlsxFile from 'write-excel-file';
 
 @Component({
-  selector: 'app-afds2023',
-  templateUrl: './afds2023.component.html',
-  styleUrls: ['./afds2023.component.scss']
+  selector: 'app-friuli-2023-2024',
+  templateUrl: './friuli2023n2024.component.html',
+  styleUrls: ['./friuli2023n2024.component.scss']
 })
-export class Afds2023Component {
+export class Friuli2023n2024Component {
   readonly LOAD = 0;
   readonly RESULTS = 1;
 
@@ -26,6 +26,8 @@ export class Afds2023Component {
   @Input() isLoading: boolean;
   @Output() isLoadingChange = new EventEmitter<boolean>();
 
+  @Input() initiative: "2023" | "2024"
+
 
   onDonorsFileChange(event: any) {
     this.donorsFile = event.target.files[0];
@@ -35,6 +37,16 @@ export class Afds2023Component {
   }
   onDonoCupSubscribersFileChange(event: any) {
     this.cupSubscribersFile = event.target.files[0];
+  }
+
+  getDates(): [Date, Date] {
+    switch (this.initiative) {
+      case '2023':
+        return [stringToDate('01/02/2023'),  stringToDate('30/06/2023')]
+      case '2024':
+        return [stringToDate('19/09/2023'),  stringToDate('12/05/2024')]
+    }
+
   }
 
 
@@ -68,14 +80,13 @@ export class Afds2023Component {
     });
   }
 
-  startDate = stringToDate('01/02/2023');
-  endDate = stringToDate('30/06/2023');
-
   async loadAndGenerate(f: NgForm) {
     f.control.markAllAsTouched();
     if (f.invalid) return;
     if (this.isLoading) return;
     this.isLoadingChange.emit(true);
+
+    const [startDate, endDate] = this.getDates();
     try {
       const [donors, donations, cupSubs] = await Promise.all([
         this.readFile(this.donorsFile!!, config['donors']) as Promise<Donor[]>,
@@ -83,8 +94,8 @@ export class Afds2023Component {
           (donations: Donation[]) =>
             donations.filter(
               (d) =>
-                d.date.getTime() >= this.startDate.getTime() &&
-                d.date.getTime() <= this.endDate.getTime()
+                d.date.getDate() >= startDate.getDate() &&
+                d.date.getDate() <= endDate.getDate()
             )
         ),
         this.readFile(
@@ -147,7 +158,7 @@ export class Afds2023Component {
             default:
               teamScore.otherDonationsCount++;
           }
-          if (donor.birth.getTime() >= stringToDate('01/01/1998').getTime()) {
+          if (donor.birth.getDate() >= stringToDate('01/01/1998').getDate()) {
             console.debug(`donor ${donor.cardNumber} is under 25`);
             teamScore.donorsUnder25CardNumbers.add(donor.cardNumber);
           }
