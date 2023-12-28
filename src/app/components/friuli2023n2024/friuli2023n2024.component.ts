@@ -49,6 +49,14 @@ export class Friuli2023n2024Component {
 
   }
 
+  getUnder25BirthdateThreshold(): Date {
+    switch (this.initiative) {
+      case '2023':
+        return new Date(1998, 0 , 1)
+        case '2024':
+        return new Date(1999, 0 , 1)
+    }
+  }
 
 
   readFile(file: File, config: CustomConfig) {
@@ -158,7 +166,7 @@ export class Friuli2023n2024Component {
             default:
               teamScore.otherDonationsCount++;
           }
-          if (donor.birth.getDate() >= stringToDate('01/01/1998').getDate()) {
+          if (donor.birth.getDate() >= this.getUnder25BirthdateThreshold().getDate()) {
             console.debug(`donor ${donor.cardNumber} is under 25`);
             teamScore.donorsUnder25CardNumbers.add(donor.cardNumber);
           }
