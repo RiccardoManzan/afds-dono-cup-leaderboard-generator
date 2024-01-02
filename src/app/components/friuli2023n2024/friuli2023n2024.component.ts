@@ -53,7 +53,7 @@ export class Friuli2023n2024Component {
     switch (this.initiative) {
       case '2023':
         return new Date(1998, 0 , 1)
-        case '2024':
+      case '2024':
         return new Date(1999, 0 , 1)
     }
   }
@@ -95,23 +95,25 @@ export class Friuli2023n2024Component {
     this.isLoadingChange.emit(true);
 
     const [startDate, endDate] = this.getDates();
+    console.debug(`Due to initiative ${this.initiative}, we'll use the following dates`, startDate, endDate);
     try {
       const [donors, donations, cupSubs] = await Promise.all([
         this.readFile(this.donorsFile!!, config['donors']) as Promise<Donor[]>,
         this.readFile(this.donationsFile!!, config['donations']).then(
-          (donations: Donation[]) =>
-            donations.filter(
+          (donations: Donation[]) => {
+            const filteredDonations = donations.filter(
               (d) =>
                 d.date.getDate() >= startDate.getDate() &&
                 d.date.getDate() <= endDate.getDate()
             )
+            console.debug(`considering only ${filteredDonations.length} donations from the ${donations.length} given due to dates limits`)
+          }
         ),
         this.readFile(
           this.cupSubscribersFile!!,
           config['cupSubscriptions']
         ) as Promise<CupSubscription[]>,
       ]);
-      console.log(donations.length);
       const leaderboardMap = donations.reduce(
         (acc: LeaderboardAcc, donation) => {
           console.debug(
