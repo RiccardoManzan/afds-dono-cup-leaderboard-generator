@@ -78,7 +78,6 @@ export class Friuli2023n2024Component {
           (donations: Donation[]) => {
             const filteredDonations = donations.filter(
               (d) =>
-                //NB: getTime gives you the epoch timestamp. getDate does not.
                 d.date.getTime() >= startDate.getTime() &&
                 d.date.getTime() <= endDate.getTime()
             );
@@ -148,8 +147,8 @@ export class Friuli2023n2024Component {
               teamScore.otherDonationsCount++;
           }
           if (
-            donor.birth.getDate() >=
-            this.getUnder25BirthdateThreshold().getDate()
+            donor.birth.getTime() >=
+            this.getUnder25BirthdateThreshold().getTime()
           ) {
             console.debug(`donor ${donor.cardNumber} is under 25`);
             teamScore.donorsUnder25CardNumbers.add(donor.cardNumber);

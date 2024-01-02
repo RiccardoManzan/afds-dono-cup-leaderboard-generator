@@ -67,7 +67,7 @@ export class Feltre2024Component {
           const normalizedDonationName = normalizeName(donation.name)
           const normalizedDonationSurname = normalizeName(donation.surname)
           const subs = cupSubs.filter((s) =>
-              s.birth.getDate() == donation.birth.getDate()
+              s.birth.getTime() == donation.birth.getTime()
               && (
                 (normalizeName(s.name) == normalizedDonationName && normalizeName(s.surname) == normalizedDonationSurname)
                 || s.cell == donation.cell
