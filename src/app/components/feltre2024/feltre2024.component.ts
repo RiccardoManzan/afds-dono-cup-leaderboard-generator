@@ -153,7 +153,7 @@ export class Feltre2024Component {
           fileName: 'leaderboard.xlsx',
           schema: [
             {
-              column: 'Position',
+              column: 'Posizione',
               type: Number,
               value: (ts) => ts.position,
               width: 8,

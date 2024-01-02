@@ -206,7 +206,7 @@ export class Friuli2023n2024Component {
           fileName: 'leaderboard.xlsx',
           schema: [
             {
-              column: 'Position',
+              column: 'Posizione',
               type: Number,
               value: (ts) => ts.position,
               width: 8,
