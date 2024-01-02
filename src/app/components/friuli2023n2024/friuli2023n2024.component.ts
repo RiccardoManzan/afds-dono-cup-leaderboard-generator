@@ -103,10 +103,12 @@ export class Friuli2023n2024Component {
           (donations: Donation[]) => {
             const filteredDonations = donations.filter(
               (d) =>
-                d.date.getDate() >= startDate.getDate() &&
-                d.date.getDate() <= endDate.getDate()
+                //NB: getTime gives you the epoch timestamp. getDate does not.
+                d.date.getTime() >= startDate.getTime() &&
+                d.date.getTime() <= endDate.getTime()
             )
             console.debug(`considering only ${filteredDonations.length} donations from the ${donations.length} given due to dates limits`)
+            return filteredDonations;
           }
         ),
         this.readFile(
