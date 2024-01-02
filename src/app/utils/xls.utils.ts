@@ -1,14 +1,14 @@
-import { Workbook } from "exceljs";
-import { Importer } from "xlsx-import/lib/Importer";
-import { equalsByValue } from "./misc.utils";
-import { IListSourceConfig } from "xlsx-import/lib/config/IListSourceConfig";
-import { ValueMapper } from "xlsx-import/lib/abstracts/ValueMapper";
+import { Workbook } from 'exceljs';
+import { Importer } from 'xlsx-import/lib/Importer';
+import { equalsByValue } from './misc.utils';
+import { IListSourceConfig } from 'xlsx-import/lib/config/IListSourceConfig';
+import { ValueMapper } from 'xlsx-import/lib/abstracts/ValueMapper';
 
 export function readFile(file: File, config: CustomConfig) {
   return new Promise<any[]>((res, rej) => {
     let fileReader = new FileReader();
     fileReader.onloadend = async (e) => {
-      console.log(config.name, JSON.stringify(e))
+      console.log(config.name, JSON.stringify(e));
       try {
         const wb = new Workbook();
         await wb.xlsx.load(fileReader.result as ArrayBuffer);
@@ -16,7 +16,7 @@ export function readFile(file: File, config: CustomConfig) {
         const items = importer.getAllItems(config);
         const headers = items.shift();
         if (!equalsByValue(headers, config.headers)) {
-          console.error(headers, config.headers)
+          console.error(headers, config.headers);
           throw `Contenuto del file non valido, gli header non corrispondono`;
         }
         console.debug(items);
@@ -35,35 +35,38 @@ export type CustomConfig = {
   headers: any;
 } & IListSourceConfig;
 
-export function mapUnlessEq<T>(header: string, mapper: ValueMapper<T>): ValueMapper<T | string> {
-  return (v: string) => (v == header ? v : mapper(v))
+export function mapUnlessEq<T>(
+  header: string,
+  mapper: ValueMapper<T>
+): ValueMapper<T | string> {
+  return (v: string) => (v == header ? v : mapper(v));
 }
 
 export function customDateMapper(input: string) {
-  const [day, month, year] = input.split('/');
+  const [day, month, year] = input.trim().split('/');
   var date = new Date(Number(year), Number(month), Number(day));
-  if(isNaN(date.getTime())){
-    date = new Date(input)
-    if(isNaN(date.getTime())) {
-      console.warn(`cannot convert date ${input}`)
+  if (isNaN(date.getTime())) {
+    date = new Date(input.trim());
+    if (isNaN(date.getTime())) {
+      console.warn(`cannot convert date ${input}`);
     }
   }
-  return date
+  return date;
 }
 
 export function customCellMapper(cell: string) {
   const sanitized = cell
-    .replace(/[-\s/]/g,'')
-    .replace(/^((00)|(\+))39/g,'')
+    .trim()
+    .replace(/[-\s/]/g, '')
+    .replace(/^((00)|(\+))39/g, '');
   if (sanitized.match(/^\d{9,11}$/)) {
-    return sanitized
+    return sanitized;
   } else {
-    console.warn(`cannot sanitize cell ${cell}`)
-    return ""
+    console.warn(`cannot sanitize cell ${cell}`);
+    return '';
   }
-
 }
 
-export function trimMapper(str: string){
-  return str.trim()
+export function trimMapper(str: string) {
+  return str.trim();
 }
