@@ -7,17 +7,17 @@ import {
   customDateMapper,
   mapUnlessEq,
   readFile,
-  trimMapper
-} from "../../utils/xls.utils";
-import { integerMapper } from "xlsx-import/lib/mappers";
-import { normalizeName } from "../../utils/misc.utils";
+  trimMapper,
+} from '../../utils/xls.utils';
+import { integerMapper } from 'xlsx-import/lib/mappers';
+import { normalizeName } from '../../utils/misc.utils';
 
 const UNDER25_BIRTH_THRESHOLD = customDateMapper('01/01/1998');
 
 @Component({
   selector: 'app-feltre2024',
   templateUrl: './feltre2024.component.html',
-  styleUrls: ['./feltre2024.component.scss']
+  styleUrls: ['./feltre2024.component.scss'],
 })
 export class Feltre2024Component {
   readonly LOAD = 0;
@@ -29,7 +29,7 @@ export class Feltre2024Component {
   cupSubscribersFile?: File;
   leaderboard: TeamScore[] | undefined;
 
-  @Input() showError: (error: any) => void
+  @Input() showError: (error: any) => void;
   @Input() isLoading: boolean;
   @Output() isLoadingChange = new EventEmitter<boolean>();
 
@@ -47,91 +47,90 @@ export class Feltre2024Component {
     if (this.isLoading) return;
     this.isLoadingChange.emit(true);
     try {
-      const [donations, cupSubs]: [Donation[], CupSubscription[]] = await Promise.all([
-        readFile(this.donationsFile!!, config['donations']),
-        readFile(this.cupSubscribersFile!!, config['cupSubscriptions'])
-      ]);
+      let [donations, cupSubs]: [Donation[], CupSubscription[]] =
+        await Promise.all([
+          readFile(this.donationsFile!!, config['donations']),
+          readFile(this.cupSubscribersFile!!, config['cupSubscriptions']),
+        ]);
       console.log(donations.length);
-      const leaderboardMap = donations.reduce(
-        (acc: LeaderboardAcc, donation) => {
 
-          //Bonus 6 sostenitori under25 -> 30 punti // solo se ha già 40 punti
-          //ignora se trovi lo stesso cell in più squadre
-          //donazione 1 punto, 2 punti se under25
-          //conteggio sostenitori under25 x spareggio
-
-
-          console.debug(
-            `CHECKING DONATION FOR ${donation.name} ${donation.surname} ${donation.cell} ${donation.donationDate}`
-          );
-          const normalizedDonationName = normalizeName(donation.name)
-          const normalizedDonationSurname = normalizeName(donation.surname)
-          const subs = cupSubs.filter((s) =>
-              s.birth.getTime() == donation.birth.getTime()
-              && (
-                (normalizeName(s.name) == normalizedDonationName && normalizeName(s.surname) == normalizedDonationSurname)
-                || s.cell == donation.cell
-              )
-          );
-          if (subs.length > 1) {
-            console.warn(`Found multiple subscriptions for the donation ${JSON.stringify(donation)} : ${JSON.stringify(subs)}`)
-            //TODO: HANDLE THIS CASE BETTER: WE SHOULD WARN USER ABOUT THESE CASES
-            return acc
-          }
-          const sub = subs[0]
-          console.debug(
-            sub
-              ? `found subscription for ${donation.name} ${donation.surname} ${donation.cell} who donated in ${donation.donationDate} with team ${sub.team}`
-              : `Subscription not found for ${donation.name} ${donation.surname} ${donation.cell} who donated in ${donation.donationDate}`
-          );
-          if (!sub) return acc;
-
-          if (!acc[sub.team]) {
-            acc[sub.team] = {
-              over25BloodDonationsCount: 0,
-              under25BloodDonationsCount: 0,
-              donorsUnder25CellNumbers: new Set(),
-            };
-          }
-          const teamScore = acc[sub.team];
-          if (donation.birth.getTime() >= UNDER25_BIRTH_THRESHOLD.getTime()) {
-            teamScore.under25BloodDonationsCount++;
-            // NOTE: This is not the best, but it should be sufficient if we consider donations export consistent:
-            //       a donor should not be able to figure in different subscriptions, even if the lookup is not strong
-            //       as I would like
-            teamScore.donorsUnder25CellNumbers.add(sub.cell);
-          } else {
-            teamScore.over25BloodDonationsCount++;
-          }
+      const duplicateCellsInSubs = cupSubs
+        .map((s) => s.cell)
+        .reduce((acc, cell, i, arr) => {
+          if (arr.indexOf(cell) !== i) acc.push(cell);
           return acc;
-        },
-        {}
-      );
+        }, []);
+
+      const leaderboardMap = cupSubs.reduce((acc: LeaderboardAcc, sub) => {
+        console.debug(
+          `RETRIEVING DONATIONS FOR ${sub.name} ${sub.surname} ${sub.cell}`
+        );
+
+        const normalizedSubName = normalizeName(sub.name);
+        const normalizedSubSurname = normalizeName(sub.surname);
+
+        const theirDonations = donations.filter(
+          (donation) =>
+          donation.birth.setHours(0,0,0,0) == sub.birth.setHours(0,0,0,0) &&
+            ((normalizeName(donation.name) == normalizedSubName &&
+              normalizeName(donation.surname) == normalizedSubSurname) ||
+              (!duplicateCellsInSubs.includes(sub.cell) &&
+              donation.cell == sub.cell))
+        );
+        donations = donations.filter((d) => !theirDonations.includes(d));
+        if(theirDonations.length == 0){
+          console.log(`No donation found for ${sub.name} ${sub.surname} ${sub.cell}`)
+          return acc;
+        }
+
+        console.log(
+          `${theirDonations.length} donations found for  ${sub.name} ${sub.surname} ${sub.cell}`,
+          theirDonations.map((d) => d.donationDate)
+        );
+
+
+        if (!acc[sub.team]) {
+          acc[sub.team] = {
+            over25BloodDonationsCount: 0,
+            under25BloodDonationsCount: 0,
+            under25DonorsCount: 0,
+          };
+        }
+        const teamScore = acc[sub.team];
+
+        if (theirDonations[0].birth.setHours(0,0,0,0) >= UNDER25_BIRTH_THRESHOLD.setHours(0,0,0,0)) {
+          teamScore.under25BloodDonationsCount += theirDonations.length;
+          teamScore.under25DonorsCount++;
+        } else {
+          teamScore.over25BloodDonationsCount += theirDonations.length;
+        }
+
+        return acc;
+      }, {});
 
       console.debug(leaderboardMap);
 
       this.leaderboard = Object.entries(leaderboardMap)
         .map(
-          ([teamName, {
-            over25BloodDonationsCount,
-            under25BloodDonationsCount,
-            donorsUnder25CellNumbers
-          },]): TeamScore => {
+          ([
+            teamName,
+            {
+              over25BloodDonationsCount,
+              under25BloodDonationsCount,
+              under25DonorsCount,
+            },
+          ]): TeamScore => {
             // noinspection PointlessArithmeticExpressionJS
             return {
               name: teamName,
               over25BloodDonationsCount: over25BloodDonationsCount,
               under25BloodDonationsCount: under25BloodDonationsCount,
-
-              donationsScore:
-                over25BloodDonationsCount * 1 +
-                under25BloodDonationsCount * 2,
-              under25DonorsCount: donorsUnder25CellNumbers.size,
+              donationsScore: over25BloodDonationsCount * 1 + under25BloodDonationsCount * 2,
+              under25DonorsCount: under25DonorsCount,
             };
           }
         )
         .sort((t1, t2) => t2.donationsScore - t1.donationsScore);
-      //First the ones with bigger donation score.
 
       this.step = this.RESULTS;
       this.isLoadingChange.emit(false);
@@ -162,13 +161,11 @@ export class Feltre2024Component {
               column: 'Squadra',
               type: String,
               value: (ts) => ts.name,
-              width: this.leaderboard.reduce(
-                (acc, ts) => {
-                  console.log((ts.name.length > acc ? ts.name.length : acc));
-                  return (ts.name.length > acc ? ts.name.length : acc)
-                },
-                7
-              ) + 5,
+              width:
+                this.leaderboard.reduce((acc, ts) => {
+                  console.log(ts.name.length > acc ? ts.name.length : acc);
+                  return ts.name.length > acc ? ts.name.length : acc;
+                }, 7) + 5,
             },
             {
               column: 'N. donazioni over 25',
@@ -251,18 +248,18 @@ const config: { [key: string]: CustomConfig } = {
 };
 
 type Donation = {
-  donationDate: Date
-  birth: Date
-  surname: string
-  name: string
-  donationsCount: number
+  donationDate: Date;
+  birth: Date;
+  surname: string;
+  name: string;
+  donationsCount: number;
   cell: string;
 };
 
 type CupSubscription = {
   name: string;
   surname: string;
-  birth: Date
+  birth: Date;
   cell: string;
   team: string;
 };
@@ -271,7 +268,7 @@ type LeaderboardAcc = { [key: string]: TeamScoreAcc };
 type TeamScoreAcc = {
   over25BloodDonationsCount: number;
   under25BloodDonationsCount: number;
-  donorsUnder25CellNumbers: Set<string>
+  under25DonorsCount: number;
 };
 type TeamScore = {
   name: string;

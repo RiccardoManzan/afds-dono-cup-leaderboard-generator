@@ -78,8 +78,8 @@ export class Friuli2023n2024Component {
           (donations: Donation[]) => {
             const filteredDonations = donations.filter(
               (d) =>
-                d.date.getTime() >= startDate.getTime() &&
-                d.date.getTime() <= endDate.getTime()
+                d.date.setHours(0,0,0,0) >= startDate.setHours(0,0,0,0) &&
+                d.date.setHours(0,0,0,0) <= endDate.setHours(0,0,0,0)
             );
             console.debug(
               `considering only ${filteredDonations.length} donations from the ${donations.length} given due to dates limits`
@@ -147,8 +147,8 @@ export class Friuli2023n2024Component {
               teamScore.otherDonationsCount++;
           }
           if (
-            donor.birth.getTime() >=
-            this.getUnder25BirthdateThreshold().getTime()
+            donor.birth.setHours(0,0,0,0) >=
+            this.getUnder25BirthdateThreshold().setHours(0,0,0,0)
           ) {
             console.debug(`donor ${donor.cardNumber} is under 25`);
             teamScore.donorsUnder25CardNumbers.add(donor.cardNumber);

@@ -44,7 +44,7 @@ export function mapUnlessEq<T>(
 
 export function customDateMapper(input: string) {
   const [day, month, year] = input.trim().split('/');
-  var date = new Date(Number(year), Number(month), Number(day));
+  var date = new Date(Number(year), Number(month)-1, Number(day));
   if (isNaN(date.getTime())) {
     date = new Date(input.trim());
     if (isNaN(date.getTime())) {
