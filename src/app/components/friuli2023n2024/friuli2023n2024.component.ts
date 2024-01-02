@@ -44,9 +44,9 @@ export class Friuli2023n2024Component {
   getDates(): [Date, Date] {
     switch (this.initiative) {
       case '2023':
-        return [stringToDate('01/02/2023'), stringToDate('30/06/2023')];
+        return [customDateMapper('01/02/2023'), customDateMapper('30/06/2023')];
       case '2024':
-        return [stringToDate('19/09/2023'), stringToDate('12/05/2024')];
+        return [customDateMapper('19/09/2023'), customDateMapper('12/05/2024')];
     }
   }
 
@@ -365,7 +365,4 @@ type TeamScore = {
   donationsScore: number;
   donorsUnder25Count: number;
 };
-function stringToDate(arg0: string): Date {
-  throw new Error('Function not implemented.');
-}
 
