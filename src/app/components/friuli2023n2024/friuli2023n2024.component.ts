@@ -1,15 +1,18 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { NgForm } from '@angular/forms';
-import { Workbook } from 'exceljs';
-import { IListSourceConfig } from 'xlsx-import/lib/config/IListSourceConfig';
-import { Importer } from 'xlsx-import/lib/Importer';
 import * as CodiceFiscaleUtils from '@marketto/codice-fiscale-utils';
 import writeXlsxFile from 'write-excel-file';
+import {
+  CustomConfig,
+  customDateMapper,
+  mapUnlessEq,
+  readFile,
+} from '../../utils/xls.utils';
 
 @Component({
   selector: 'app-friuli-2023-2024',
   templateUrl: './friuli2023n2024.component.html',
-  styleUrls: ['./friuli2023n2024.component.scss']
+  styleUrls: ['./friuli2023n2024.component.scss'],
 })
 export class Friuli2023n2024Component {
   readonly LOAD = 0;
@@ -22,12 +25,11 @@ export class Friuli2023n2024Component {
   cupSubscribersFile?: File;
   leaderboard: TeamScore[] | undefined;
 
-  @Input() showError: (error: any) => void
+  @Input() showError: (error: any) => void;
   @Input() isLoading: boolean;
   @Output() isLoadingChange = new EventEmitter<boolean>();
 
-  @Input() initiative: "2023" | "2024"
-
+  @Input() initiative: '2023' | '2024';
 
   onDonorsFileChange(event: any) {
     this.donorsFile = event.target.files[0];
@@ -42,50 +44,19 @@ export class Friuli2023n2024Component {
   getDates(): [Date, Date] {
     switch (this.initiative) {
       case '2023':
-        return [stringToDate('01/02/2023'),  stringToDate('30/06/2023')]
+        return [stringToDate('01/02/2023'), stringToDate('30/06/2023')];
       case '2024':
-        return [stringToDate('19/09/2023'),  stringToDate('12/05/2024')]
+        return [stringToDate('19/09/2023'), stringToDate('12/05/2024')];
     }
-
   }
 
   getUnder25BirthdateThreshold(): Date {
     switch (this.initiative) {
       case '2023':
-        return new Date(1998, 0 , 1)
+        return new Date(1998, 0, 1);
       case '2024':
-        return new Date(1999, 0 , 1)
+        return new Date(1999, 0, 1);
     }
-  }
-
-
-  readFile(file: File, config: CustomConfig) {
-    return new Promise<any[]>((res, rej) => {
-      let fileReader = new FileReader();
-      fileReader.onloadend = async (_) => {
-        try {
-          const wb = new Workbook();
-          await wb.xlsx.load(fileReader.result as ArrayBuffer);
-          const importer = new Importer(wb);
-          const items = importer.getAllItems(config);
-          const headers = items.shift();
-          console.debug(
-            headers,
-            config.headers,
-            equalsByValue(headers, config.headers)
-          );
-          if (!equalsByValue(headers, config.headers)) {
-            throw `Contenuto del file non valido`;
-          }
-          console.debug(items);
-          res(items);
-        } catch (ex) {
-          console.error(ex);
-          rej(`Errore durante la lettura del file ${config.name}: ${ex}`);
-        }
-      };
-      fileReader.readAsArrayBuffer(file);
-    });
   }
 
   async loadAndGenerate(f: NgForm) {
@@ -95,23 +66,29 @@ export class Friuli2023n2024Component {
     this.isLoadingChange.emit(true);
 
     const [startDate, endDate] = this.getDates();
-    console.debug(`Due to initiative ${this.initiative}, we'll use the following dates`, startDate, endDate);
+    console.debug(
+      `Due to initiative ${this.initiative}, we'll use the following dates`,
+      startDate,
+      endDate
+    );
     try {
       const [donors, donations, cupSubs] = await Promise.all([
-        this.readFile(this.donorsFile!!, config['donors']) as Promise<Donor[]>,
-        this.readFile(this.donationsFile!!, config['donations']).then(
+        readFile(this.donorsFile!!, config['donors']) as Promise<Donor[]>,
+        readFile(this.donationsFile!!, config['donations']).then(
           (donations: Donation[]) => {
             const filteredDonations = donations.filter(
               (d) =>
                 //NB: getTime gives you the epoch timestamp. getDate does not.
                 d.date.getTime() >= startDate.getTime() &&
                 d.date.getTime() <= endDate.getTime()
-            )
-            console.debug(`considering only ${filteredDonations.length} donations from the ${donations.length} given due to dates limits`)
+            );
+            console.debug(
+              `considering only ${filteredDonations.length} donations from the ${donations.length} given due to dates limits`
+            );
             return filteredDonations;
           }
         ),
-        this.readFile(
+        readFile(
           this.cupSubscribersFile!!,
           config['cupSubscriptions']
         ) as Promise<CupSubscription[]>,
@@ -170,7 +147,10 @@ export class Friuli2023n2024Component {
             default:
               teamScore.otherDonationsCount++;
           }
-          if (donor.birth.getDate() >= this.getUnder25BirthdateThreshold().getDate()) {
+          if (
+            donor.birth.getDate() >=
+            this.getUnder25BirthdateThreshold().getDate()
+          ) {
             console.debug(`donor ${donor.cardNumber} is under 25`);
             teamScore.donorsUnder25CardNumbers.add(donor.cardNumber);
           }
@@ -205,14 +185,13 @@ export class Friuli2023n2024Component {
           };
         })
         .sort((t1, t2) => t2.donationsScore - t1.donationsScore);
-      //First the ones with bigger donation score.
 
       this.step = this.RESULTS;
-    this.isLoadingChange.emit(false);
+      this.isLoadingChange.emit(false);
     } catch (ex) {
       console.error(ex);
       this.showError(ex);
-    this.isLoadingChange.emit(false);
+      this.isLoadingChange.emit(false);
     }
   }
 
@@ -236,10 +215,11 @@ export class Friuli2023n2024Component {
               column: 'Squadra',
               type: String,
               value: (ts) => ts.name,
-              width: this.leaderboard.reduce(
-                (acc, ts) =>{ console.log((ts.name.length > acc ? ts.name.length : acc)); return (ts.name.length > acc ? ts.name.length : acc)},
-                7
-              ) + 5,
+              width:
+                this.leaderboard.reduce((acc, ts) => {
+                  console.log(ts.name.length > acc ? ts.name.length : acc);
+                  return ts.name.length > acc ? ts.name.length : acc;
+                }, 7) + 5,
             },
             {
               column: 'N. donazioni sangue intero',
@@ -294,7 +274,7 @@ const config: { [key: string]: CustomConfig } = {
       {
         index: 4,
         key: 'birth',
-        mapper: (v: string) => (v == 'Dt. Nasc.' ? v : stringToDate(v)),
+        mapper: mapUnlessEq('Dt. Nasc.', customDateMapper),
       },
     ],
     name: 'estrazione donatori',
@@ -314,7 +294,7 @@ const config: { [key: string]: CustomConfig } = {
       {
         index: 3,
         key: 'date',
-        mapper: (v: string) => (v == 'Data Donazione' ? v : stringToDate(v)),
+        mapper: mapUnlessEq('Data Donazione', customDateMapper),
       },
       { index: 8, key: 'type' },
     ],
@@ -347,11 +327,6 @@ const config: { [key: string]: CustomConfig } = {
   },
 };
 
-type CustomConfig = {
-  name: string;
-  headers: any;
-} & IListSourceConfig;
-
 type Donor = {
   cardNumber: string;
   nominative: string;
@@ -374,12 +349,14 @@ type CupSubscription = {
 };
 
 type LeaderboardAcc = { [key: string]: TeamScoreAcc };
+
 type TeamScoreAcc = {
   entireBloodDonationsCount: number;
   plasmaDonationsCount: number;
   otherDonationsCount: number;
   donorsUnder25CardNumbers: Set<string>;
 };
+
 type TeamScore = {
   name: string;
   entireBloodDonationsCount: number;
@@ -388,19 +365,7 @@ type TeamScore = {
   donationsScore: number;
   donorsUnder25Count: number;
 };
-
-function equalsByValue(obj1: any, obj2: any): boolean {
-  const obj1Keys = Object.keys(obj1);
-  const obj2Keys = Object.keys(obj2);
-
-  return (
-    obj1Keys.length === obj2Keys.length &&
-    obj1Keys.every((key) => obj1[key] == obj2[key])
-  );
-}
-
-function stringToDate(dateString: string) {
-  const [day, month, year] = dateString.split('/');
-  return new Date([month, day, year].join('/'));
+function stringToDate(arg0: string): Date {
+  throw new Error('Function not implemented.');
 }
 
