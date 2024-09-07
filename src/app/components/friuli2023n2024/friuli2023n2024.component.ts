@@ -8,6 +8,7 @@ import {
   mapUnlessEq,
   readFile,
 } from '../../utils/xls.utils';
+import belfioreConnector from "@marketto/belfiore-connector-embedded";
 
 @Component({
   selector: 'app-friuli-2023-2024',
@@ -72,8 +73,9 @@ export class Friuli2023n2024Component {
       endDate
     );
     try {
-      const [donors, donations, cupSubs] = await Promise.all([
-        readFile(this.donorsFile!!, config['donors']) as Promise<Donor[]>,
+
+      const [donors, donations, cupSubs] : [Donor[], Donation[], CupSubscription[]] = await Promise.all([
+        readFile(this.donorsFile!!, config['donors']),
         readFile(this.donationsFile!!, config['donations']).then(
           (donations: Donation[]) => {
             const filteredDonations = donations.filter(
@@ -90,7 +92,7 @@ export class Friuli2023n2024Component {
         readFile(
           this.cupSubscribersFile!!,
           config['cupSubscriptions']
-        ) as Promise<CupSubscription[]>,
+        ),
       ]);
       const leaderboardMap = donations.reduce(
         (acc: LeaderboardAcc, donation) => {
