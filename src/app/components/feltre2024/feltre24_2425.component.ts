@@ -32,6 +32,7 @@ export class Feltre24_2425Component {
   @Input() initiative: '24' | '24/25' | string;
 
   @Output() isLoadingChange = new EventEmitter<boolean>();
+  public enableFirstDonations: boolean;
 
   getUnder25BirthdateThreshold(): Date {
     switch (this.initiative) {
@@ -51,6 +52,7 @@ export class Feltre24_2425Component {
   }
 
   async loadAndGenerate(f: NgForm) {
+    this.enableFirstDonations = this.initiative == '24/25';
     f.control.markAllAsTouched();
     if (f.invalid) return;
     if (this.isLoading) return;
@@ -119,7 +121,7 @@ export class Feltre24_2425Component {
         } else {
           teamScore.over25BloodDonationsCount += theirDonations.length;
         }
-        if(theyDidTheirFirstDonation && this.initiative == '24/25'){
+        if(theyDidTheirFirstDonation && this.enableFirstDonations){
           teamScore.firstDonationsCount ++;
           //TODO: TO BE CONFIRMED
           if(isUnder25){
@@ -194,18 +196,18 @@ export class Feltre24_2425Component {
                 }, 7) + 5,
             },
             {
-              column: 'N. donazioni over 25 (escl. prime donaz.)',
+              column: 'N. donazioni over 25' + (this.enableFirstDonations? ' (escl. prime donaz.)' : ''),
               type: Number,
               value: (ts : PositionedTeamScore) => ts.over25BloodDonationsCount,
-              width: 47,
+              width: 26 + (this.enableFirstDonations? 21 : 0),
             },
             {
-              column: 'N. donazioni under 25 (escl. prime donaz.)',
+              column: 'N. donazioni under 25' + (this.enableFirstDonations? ' (escl. prime donaz.)' : ''),
               type: Number,
               value: (ts : PositionedTeamScore) => ts.under25BloodDonationsCount,
-              width: 42,
+              width: 21 + (this.enableFirstDonations? 21 : 0),
             },
-            this.initiative == '24/25' ? {
+            this.enableFirstDonations ? {
               column: 'N. prime donazioni',
               type: Number,
               value: (ts : PositionedTeamScore) => ts.firstDonationsCount,
