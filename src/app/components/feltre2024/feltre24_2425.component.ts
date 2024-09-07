@@ -80,7 +80,7 @@ export class Feltre24_2425Component {
 
         const theirDonations = donations.filter(
           (donation) =>
-          donation.birth == sub.birth &&
+          donation.birth.getTime() == sub.birth.getTime() &&
             ((normalizeName(donation.name) == normalizedSubName &&
               normalizeName(donation.surname) == normalizedSubSurname) ||
               (!duplicateCellsInSubs.includes(sub.cell) &&
@@ -96,7 +96,6 @@ export class Feltre24_2425Component {
           `${theirDonations.length} donations found for  ${sub.name} ${sub.surname} ${sub.cell}`,
           theirDonations.map((d) => d.donationDate)
         );
-
 
         if (!acc[sub.team]) {
           acc[sub.team] = {
@@ -129,7 +128,6 @@ export class Feltre24_2425Component {
             teamScore.over25BloodDonationsCount--;
           }
         }
-
 
         return acc;
       }, {});
