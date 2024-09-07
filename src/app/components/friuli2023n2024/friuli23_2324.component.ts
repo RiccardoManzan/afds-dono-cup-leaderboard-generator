@@ -30,7 +30,7 @@ export class Friuli23_2324Component {
   @Input() isLoading: boolean;
   @Output() isLoadingChange = new EventEmitter<boolean>();
 
-  @Input() initiative: '23' | '23/24';
+  @Input() initiative: '23' | '23/24' | string;
 
   onDonorsFileChange(event: any) {
     this.donorsFile = event.target.files[0];
