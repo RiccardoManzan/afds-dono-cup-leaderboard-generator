@@ -66,10 +66,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "afds-dono-cup-leaderboard-generator:build:production"
+              "buildTarget": "afds-dono-cup-leaderboard-generator:build:production"
             },
             "development": {
-              "browserTarget": "afds-dono-cup-leaderboard-generator:build:development"
+              "buildTarget": "afds-dono-cup-leaderboard-generator:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -77,7 +77,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "afds-dono-cup-leaderboard-generator:build"
+            "buildTarget": "afds-dono-cup-leaderboard-generator:build"
           }
         },
         "test": {

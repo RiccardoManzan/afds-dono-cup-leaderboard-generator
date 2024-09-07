@@ -10,13 +10,13 @@
   },
   "private": true,
   "dependencies": {
-    "@angular/animations": "^16.2.12",
-    "@angular/common": "^16.2.12",
-    "@angular/compiler": "^16.2.12",
-    "@angular/core": "^16.2.12",
-    "@angular/forms": "^16.2.12",
-    "@angular/platform-browser": "^16.2.12",
-    "@angular/platform-browser-dynamic": "^16.2.12",
+    "@angular/animations": "^17.3.12",
+    "@angular/common": "^17.3.12",
+    "@angular/compiler": "^17.3.12",
+    "@angular/core": "^17.3.12",
+    "@angular/forms": "^17.3.12",
+    "@angular/platform-browser": "^17.3.12",
+    "@angular/platform-browser-dynamic": "^17.3.12",
     "@marketto/belfiore-connector-embedded": "^1.1.0",
     "@marketto/codice-fiscale-utils": "^3.0.0",
     "@popperjs/core": "^2.11.6",
@@ -29,13 +29,13 @@
     "tslib": "^2.7.0",
     "write-excel-file": "^2.0.9",
     "xlsx-import": "^2.4.7",
-    "zone.js": "~0.13.3"
+    "zone.js": "~0.14.10"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^16.2.15",
-    "@angular/cli": "~16.2.15",
-    "@angular/compiler-cli": "^16.2.12",
-    "@angular/localize": "^16.2.12",
+    "@angular-devkit/build-angular": "^17.3.9",
+    "@angular/cli": "~17.3.9",
+    "@angular/compiler-cli": "^17.3.12",
+    "@angular/localize": "^17.3.12",
     "@types/jasmine": "~4.3.0",
     "jasmine-core": "~4.5.0",
     "karma": "~6.4.0",
@@ -44,6 +44,6 @@
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.0.0",
     "license-report": "^6.3.0",
-    "typescript": "~4.9.4"
+    "typescript": "~5.4.5"
   }
 }
