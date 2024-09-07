@@ -11,11 +11,11 @@ import {
 import belfioreConnector from "@marketto/belfiore-connector-embedded";
 
 @Component({
-  selector: 'app-friuli-2023-2024',
-  templateUrl: './friuli2023n2024.component.html',
-  styleUrls: ['./friuli2023n2024.component.scss'],
+  selector: 'app-friuli-23-2324',
+  templateUrl: './friuli23_2324.component.html',
+  styleUrls: ['./friuli23_2324.component.scss'],
 })
-export class Friuli2023n2024Component {
+export class Friuli23_2324Component {
   readonly LOAD = 0;
   readonly RESULTS = 1;
 
@@ -30,7 +30,7 @@ export class Friuli2023n2024Component {
   @Input() isLoading: boolean;
   @Output() isLoadingChange = new EventEmitter<boolean>();
 
-  @Input() initiative: '2023' | '2024';
+  @Input() initiative: '23' | '2324';
 
   onDonorsFileChange(event: any) {
     this.donorsFile = event.target.files[0];
@@ -44,18 +44,18 @@ export class Friuli2023n2024Component {
 
   getDates(): [Date, Date] {
     switch (this.initiative) {
-      case '2023':
+      case '23':
         return [customDateMapper('01/02/2023'), customDateMapper('30/06/2023')];
-      case '2024':
+      case '2324':
         return [customDateMapper('19/09/2023'), customDateMapper('12/05/2024')];
     }
   }
 
   getUnder25BirthdateThreshold(): Date {
     switch (this.initiative) {
-      case '2023':
+      case '23':
         return new Date(1998, 0, 1);
-      case '2024':
+      case '2324':
         return new Date(1999, 0, 1);
     }
   }

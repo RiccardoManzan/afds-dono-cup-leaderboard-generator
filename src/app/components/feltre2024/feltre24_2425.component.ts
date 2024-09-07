@@ -15,11 +15,11 @@ import { normalizeName } from '../../utils/misc.utils';
 const UNDER25_BIRTH_THRESHOLD = customDateMapper('01/01/1998');
 
 @Component({
-  selector: 'app-feltre2024',
-  templateUrl: './feltre2024.component.html',
-  styleUrls: ['./feltre2024.component.scss'],
+  selector: 'app-feltre24-2425',
+  templateUrl: './feltre24_2425.component.html',
+  styleUrls: ['./feltre24_2425.component.scss'],
 })
-export class Feltre2024Component {
+export class Feltre24_2425Component {
   readonly LOAD = 0;
   readonly RESULTS = 1;
 

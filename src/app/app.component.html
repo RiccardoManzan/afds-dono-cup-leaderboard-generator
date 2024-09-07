@@ -49,7 +49,7 @@
           <div class="col-5 my-2">
             <button
               class="btn btn-primary btn-block w-100"
-              (click)="setInitiative('AFDVS2024')"
+              (click)="setInitiative('AFDVS-24/25')"
             >
               <h4 class="m-n1">Coppa Dono AFDVS (Feltre) 2024</h4>
             </button>
@@ -57,15 +57,15 @@
           <div class="col-5 my-2">
             <button
               class="btn btn-primary btn-block w-100"
-              (click)="setInitiative('AFDS2024')"
+              (click)="setInitiative('AFDS-23/24')"
             >
-              <h4 class="m-n1">Coppa Dono AFDS (Friuli) 2024</h4>
+              <h4 class="m-n1">Coppa Dono AFDS (Friuli) 2023-2024</h4>
             </button>
           </div>
           <div class="col-5 my-2">
             <button
               class="btn btn-secondary btn-block w-100"
-              (click)="setInitiative('AFDS2023')"
+              (click)="setInitiative('AFDS-23')"
             >
               <h4 class="m-n1">Coppa Dono AFDS (Friuli) 2023</h4>
             </button>
@@ -73,20 +73,20 @@
         </div>
       </div>
       <div
-      [ngbCollapse]="initiative != 'AFDVS2024'"
+      [ngbCollapse]="initiative != 'AFDVS-24'"
       >
-          <app-feltre2024
+          <app-feltre24-2425
           [showError]="showError.bind(this)"
           [(isLoading)]="isLoading"
           />
       </div>
       <div
-      [ngbCollapse]="initiative != 'AFDS2023' && initiative != 'AFDS2024'"
+      [ngbCollapse]="initiative != 'AFDS-23' && initiative != 'AFDS-23/24'"
       >
-          <app-friuli-2023-2024
+          <app-friuli-23-2324
           [showError]="showError.bind(this)"
           [(isLoading)]="isLoading"
-          [initiative]="initiative == 'AFDS2023'? '2023' : '2024'"
+          [initiative]="initiative == 'AFDS-23'? '23' : '2324'"
           />
       </div>
       </div>

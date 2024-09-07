@@ -28,4 +28,4 @@ export class AppComponent {
   }
 }
 
-type Initiative = 'AFDS2023' | 'AFDVS2024' | 'AFDS2024';
+type Initiative = 'AFDS-23' | 'AFDVS-24' | 'AFDS-23/24' | 'AFDVS-24/25';
