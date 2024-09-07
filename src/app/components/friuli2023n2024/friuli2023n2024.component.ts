@@ -112,7 +112,8 @@ export class Friuli2023n2024Component {
             //TODO add to error file output
             return acc;
           }
-          const cfValidator = CodiceFiscaleUtils.Validator.codiceFiscale(
+
+          const cfValidator = new CodiceFiscaleUtils.Validator(belfioreConnector).codiceFiscale(
             sub.cf
           );
           //Note: Not checking name and lastname here as this would be more likely to fail. We've got already a decent logic to fight against fake subscriptions.
