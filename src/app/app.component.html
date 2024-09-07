@@ -73,20 +73,21 @@
         </div>
       </div>
       <div
-      [ngbCollapse]="initiative != 'AFDVS-24'"
+      [ngbCollapse]="['AFDVS-24', 'AFDVS-24/25'].includes(initiative)"
       >
           <app-feltre24-2425
           [showError]="showError.bind(this)"
           [(isLoading)]="isLoading"
+          [initiative]="initiative.substr(6)"
           />
       </div>
       <div
-      [ngbCollapse]="initiative != 'AFDS-23' && initiative != 'AFDS-23/24'"
+      [ngbCollapse]="['AFDS-23', 'AFDS-23/24'].includes(initiative)"
       >
           <app-friuli-23-2324
           [showError]="showError.bind(this)"
           [(isLoading)]="isLoading"
-          [initiative]="initiative == 'AFDS-23'? '23' : '2324'"
+          [initiative]="initiative.substr(5)"
           />
       </div>
       </div>

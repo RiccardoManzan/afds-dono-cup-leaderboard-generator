@@ -31,6 +31,8 @@ export class Feltre24_2425Component {
 
   @Input() showError: (error: any) => void;
   @Input() isLoading: boolean;
+  @Input() initiative: '24' | '24/25' | string;
+
   @Output() isLoadingChange = new EventEmitter<boolean>();
 
   onDonationsFileChange(event: any) {
