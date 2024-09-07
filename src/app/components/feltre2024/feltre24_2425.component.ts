@@ -12,8 +12,6 @@ import {
 import { integerMapper } from 'xlsx-import/lib/mappers';
 import { normalizeName } from '../../utils/misc.utils';
 
-const UNDER25_BIRTH_THRESHOLD = customDateMapper('01/01/1998');
-
 @Component({
   selector: 'app-feltre24-2425',
   templateUrl: './feltre24_2425.component.html',
@@ -34,6 +32,15 @@ export class Feltre24_2425Component {
   @Input() initiative: '24' | '24/25' | string;
 
   @Output() isLoadingChange = new EventEmitter<boolean>();
+
+  getUnder25BirthdateThreshold(): Date {
+    switch (this.initiative) {
+      case '24':
+        return new Date(1998, 0, 1);
+      case '24/25':
+        return new Date(1999, 0, 1);
+    }
+  }
 
   onDonationsFileChange(event: any) {
     this.donationsFile = event.target.files[0];
@@ -73,7 +80,7 @@ export class Feltre24_2425Component {
 
         const theirDonations = donations.filter(
           (donation) =>
-          donation.birth.setHours(0,0,0,0) == sub.birth.setHours(0,0,0,0) &&
+          donation.birth == sub.birth &&
             ((normalizeName(donation.name) == normalizedSubName &&
               normalizeName(donation.surname) == normalizedSubSurname) ||
               (!duplicateCellsInSubs.includes(sub.cell) &&
@@ -96,16 +103,33 @@ export class Feltre24_2425Component {
             over25BloodDonationsCount: 0,
             under25BloodDonationsCount: 0,
             under25DonorsCount: 0,
+            firstDonationsCount: 0
           };
         }
         const teamScore = acc[sub.team];
 
-        if (theirDonations[0].birth.setHours(0,0,0,0) >= UNDER25_BIRTH_THRESHOLD.setHours(0,0,0,0)) {
+        const isUnder25 = theirDonations[0].birth.getTime() >= this.getUnder25BirthdateThreshold().getTime();
+        //NB: this might not be sufficient if the export used has been generated after the end of the initiative, as the
+        //    count might have grown.
+        const theyDidTheirFirstDonation = theirDonations.length == theirDonations[0].donationsCount;
+
+
+        if(isUnder25) {
           teamScore.under25BloodDonationsCount += theirDonations.length;
           teamScore.under25DonorsCount++;
         } else {
           teamScore.over25BloodDonationsCount += theirDonations.length;
         }
+        if(theyDidTheirFirstDonation && this.initiative == '24/25'){
+          teamScore.firstDonationsCount ++;
+          //TODO: TO BE CONFIRMED
+          if(isUnder25){
+            teamScore.under25BloodDonationsCount--;
+          } else {
+            teamScore.over25BloodDonationsCount--;
+          }
+        }
+
 
         return acc;
       }, {});
@@ -120,6 +144,7 @@ export class Feltre24_2425Component {
               over25BloodDonationsCount,
               under25BloodDonationsCount,
               under25DonorsCount,
+              firstDonationsCount,
             },
           ]): TeamScore => {
             // noinspection PointlessArithmeticExpressionJS
@@ -127,8 +152,9 @@ export class Feltre24_2425Component {
               name: teamName,
               over25BloodDonationsCount: over25BloodDonationsCount,
               under25BloodDonationsCount: under25BloodDonationsCount,
-              donationsScore: over25BloodDonationsCount * 1 + under25BloodDonationsCount * 2,
+              donationsScore: over25BloodDonationsCount * 1 + under25BloodDonationsCount * 2 + firstDonationsCount * 4,
               under25DonorsCount: under25DonorsCount,
+              firstDonationsCount: firstDonationsCount,
             };
           }
         )
@@ -156,13 +182,13 @@ export class Feltre24_2425Component {
             {
               column: 'Posizione',
               type: Number,
-              value: (ts) => ts.position,
+              value: (ts : PositionedTeamScore) => ts.position,
               width: 8,
             },
             {
               column: 'Squadra',
               type: String,
-              value: (ts) => ts.name,
+              value: (ts : PositionedTeamScore) => ts.name,
               width:
                 this.leaderboard.reduce((acc, ts) => {
                   console.log(ts.name.length > acc ? ts.name.length : acc);
@@ -170,30 +196,36 @@ export class Feltre24_2425Component {
                 }, 7) + 5,
             },
             {
-              column: 'N. donazioni over 25',
+              column: 'N. donazioni over 25 (escl. prime donaz.)',
               type: Number,
-              value: (ts) => ts.over25BloodDonationsCount,
-              width: 26,
+              value: (ts : PositionedTeamScore) => ts.over25BloodDonationsCount,
+              width: 47,
             },
             {
-              column: 'N. donazioni under 25',
+              column: 'N. donazioni under 25 (escl. prime donaz.)',
               type: Number,
-              value: (ts) => ts.under25BloodDonationsCount,
-              width: 21,
+              value: (ts : PositionedTeamScore) => ts.under25BloodDonationsCount,
+              width: 42,
             },
+            this.initiative == '24/25' ? {
+              column: 'N. prime donazioni',
+              type: Number,
+              value: (ts : PositionedTeamScore) => ts.firstDonationsCount,
+              width: 18,
+            } : null,
             {
               column: 'Punteggio da donazioni',
               type: Number,
-              value: (ts) => ts.donationsScore,
+              value: (ts : PositionedTeamScore) => ts.donationsScore,
               width: 22,
             },
             {
               column: 'N. donatori under 25',
               type: Number,
-              value: (ts) => ts.under25DonorsCount,
+              value: (ts: PositionedTeamScore) => ts.under25DonorsCount,
               width: 20,
             },
-          ],
+          ].filter(it => it != null),
         }
       );
     } catch (ex) {
@@ -271,6 +303,7 @@ type TeamScoreAcc = {
   over25BloodDonationsCount: number;
   under25BloodDonationsCount: number;
   under25DonorsCount: number;
+  firstDonationsCount: number;
 };
 type TeamScore = {
   name: string;
@@ -278,5 +311,9 @@ type TeamScore = {
   under25BloodDonationsCount: number;
   donationsScore: number;
   under25DonorsCount: number;
+  firstDonationsCount: number;
 };
+type PositionedTeamScore = {
+  position: number
+} & TeamScore
 

@@ -47,6 +47,7 @@ export function customDateMapper(input: string) {
   var date = new Date(Number(year), Number(month)-1, Number(day));
   if (isNaN(date.getTime())) {
     date = new Date(input.trim());
+    date.setHours(0,0,0,0);
     if (isNaN(date.getTime())) {
       console.warn(`cannot convert date ${input}`);
     }
