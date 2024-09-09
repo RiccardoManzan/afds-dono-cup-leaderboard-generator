@@ -18,7 +18,8 @@
           "builder": "@angular-devkit/build-angular:application",
           "options": {
             "outputPath": {
-              "base": "dist/afds-dono-cup-leaderboard-generator"
+              "base": "dist/afds-dono-cup-leaderboard-generator",
+              "browser": ""
             },
             "index": "src/index.html",
             "polyfills": [
