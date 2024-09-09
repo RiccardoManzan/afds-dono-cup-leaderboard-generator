@@ -63,9 +63,9 @@
       <tr>
         <th scope="col">#</th>
         <th scope="col">Squadra</th>
-        <th scope="col"># Donazioni over 25 <span *ngIf="enableFirstDonations">(escl. prime donaz.)</span></th>
-        <th scope="col"># Donazioni under 25 <span *ngIf="enableFirstDonations">(escl. prime donaz.)</span></th>
-        <th scope="col" *ngIf="initiative == '24/25'"># Prime donazioni</th>
+        <th scope="col"># Donazioni over 25</th>
+        <th scope="col"># Donazioni under 25</th>
+        <th scope="col" *ngIf="enableFirstDonations"># Prime donazioni</th>
         <th scope="col">Punteggio</th>
         <th scope="col">Partecipanti under 25</th>
       </tr>
@@ -83,7 +83,7 @@
         </td>
         <td>{{ teamScore.over25BloodDonationsCount }}</td>
         <td>{{ teamScore.under25BloodDonationsCount }}</td>
-        <td *ngIf="initiative == '24/25'">{{ teamScore.firstDonationsCount }}</td>
+        <td *ngIf="enableFirstDonations">{{ teamScore.firstDonationsCount }}</td>
         <td>{{ teamScore.donationsScore }}</td>
         <td>{{ teamScore.under25DonorsCount }}</td>
       </tr>

@@ -109,26 +109,20 @@ export class Feltre24_2425Component {
         }
         const teamScore = acc[sub.team];
 
+
+
         const isUnder25 = theirDonations[0].birth.getTime() >= this.getUnder25BirthdateThreshold().getTime();
-        //NB: this might not be sufficient if the export used has been generated after the end of the initiative, as the
-        //    count might have grown.
-        const theyDidTheirFirstDonation = theirDonations.length == theirDonations[0].donationsCount;
-
-
         if(isUnder25) {
           teamScore.under25BloodDonationsCount += theirDonations.length;
           teamScore.under25DonorsCount++;
         } else {
           teamScore.over25BloodDonationsCount += theirDonations.length;
         }
+        //NB: this might not be sufficient if the export used has been generated after the end of the initiative, as the
+        //    count might have grown.
+        const theyDidTheirFirstDonation = theirDonations.length == theirDonations[0].donationsCount;
         if(theyDidTheirFirstDonation && this.enableFirstDonations){
           teamScore.firstDonationsCount ++;
-          //TODO: TO BE CONFIRMED
-          if(isUnder25){
-            teamScore.under25BloodDonationsCount--;
-          } else {
-            teamScore.over25BloodDonationsCount--;
-          }
         }
 
         return acc;
@@ -152,7 +146,7 @@ export class Feltre24_2425Component {
               name: teamName,
               over25BloodDonationsCount: over25BloodDonationsCount,
               under25BloodDonationsCount: under25BloodDonationsCount,
-              donationsScore: over25BloodDonationsCount * 1 + under25BloodDonationsCount * 2 + firstDonationsCount * 4,
+              donationsScore: over25BloodDonationsCount * 1 + under25BloodDonationsCount * 2 + firstDonationsCount * 3,
               under25DonorsCount: under25DonorsCount,
               firstDonationsCount: firstDonationsCount,
             };
@@ -196,16 +190,16 @@ export class Feltre24_2425Component {
                 }, 7) + 5,
             },
             {
-              column: 'N. donazioni over 25' + (this.enableFirstDonations? ' (escl. prime donaz.)' : ''),
+              column: 'N. donazioni over 25',
               type: Number,
               value: (ts : PositionedTeamScore) => ts.over25BloodDonationsCount,
-              width: 26 + (this.enableFirstDonations? 21 : 0),
+              width: 26,
             },
             {
-              column: 'N. donazioni under 25' + (this.enableFirstDonations? ' (escl. prime donaz.)' : ''),
+              column: 'N. donazioni under 25',
               type: Number,
               value: (ts : PositionedTeamScore) => ts.under25BloodDonationsCount,
-              width: 21 + (this.enableFirstDonations? 21 : 0),
+              width: 21,
             },
             this.enableFirstDonations ? {
               column: 'N. prime donazioni',
