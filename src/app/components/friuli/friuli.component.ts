@@ -11,11 +11,11 @@ import {
 import belfioreConnector from "@marketto/belfiore-connector-embedded";
 
 @Component({
-  selector: 'app-friuli-23-2324',
-  templateUrl: './friuli23_2324.component.html',
-  styleUrls: ['./friuli23_2324.component.scss'],
+  selector: 'app-friuli',
+  templateUrl: './friuli.component.html',
+  styleUrls: ['./friuli.component.scss'],
 })
-export class Friuli23_2324Component {
+export class FriuliComponent {
   readonly LOAD = 0;
   readonly RESULTS = 1;
 
@@ -30,7 +30,7 @@ export class Friuli23_2324Component {
   @Input() isLoading: boolean;
   @Output() isLoadingChange = new EventEmitter<boolean>();
 
-  @Input() initiative: '23' | '23/24' | string;
+  @Input() initiative: '23' | '23/24' | '24/25' | string;
 
   onDonorsFileChange(event: any) {
     this.donorsFile = event.target.files[0];
@@ -48,6 +48,8 @@ export class Friuli23_2324Component {
         return [customDateMapper('01/02/2023'), customDateMapper('30/06/2023')];
       case '23/24':
         return [customDateMapper('19/09/2023'), customDateMapper('12/05/2024')];
+      case '24/25':
+        return [customDateMapper('19/09/2024'), customDateMapper('30/04/2025')];
     }
   }
 
@@ -57,6 +59,8 @@ export class Friuli23_2324Component {
         return new Date(1998, 0, 1);
       case '23/24':
         return new Date(1999, 0, 1);
+      case '24/25':
+        return new Date(2000, 0, 1);
     }
   }
 
