@@ -30,7 +30,7 @@ export class FriuliComponent {
   @Input() isLoading: boolean;
   @Output() isLoadingChange = new EventEmitter<boolean>();
 
-  @Input() initiative: '23' | '23/24' | '24/25' | string;
+  @Input() initiative: '23' | '23/24' | '24/25' | '25/26' | string;
 
   onDonorsFileChange(event: any) {
     this.donorsFile = event.target.files[0];
@@ -50,6 +50,8 @@ export class FriuliComponent {
         return [customDateMapper('19/09/2023'), customDateMapper('12/05/2024')];
       case '24/25':
         return [customDateMapper('19/09/2024'), customDateMapper('30/04/2025')];
+      case '25/26':
+        return [customDateMapper('20/10/2025'), customDateMapper('30/06/2026')];
     }
   }
 
@@ -61,6 +63,8 @@ export class FriuliComponent {
         return new Date(1999, 0, 1);
       case '24/25':
         return new Date(2000, 0, 1);
+      case '25/26':
+        return new Date(2001, 0, 1);
     }
   }
 

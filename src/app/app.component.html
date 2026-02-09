@@ -49,6 +49,14 @@
           <div class="col-5 my-2">
             <button
               class="btn btn-primary btn-block w-100"
+              (click)="setInitiative('AFDS-25/26')"
+            >
+              <h4 class="m-n1">Coppa Dono AFDS (Friuli) 2025-2026</h4>
+            </button>
+          </div>
+          <div class="col-5 my-2">
+            <button
+              class="btn btn-secondary btn-block w-100"
               (click)="setInitiative('AFDS-24/25')"
             >
               <h4 class="m-n1">Coppa Dono AFDS (Friuli) 2024-2025</h4>
@@ -98,7 +106,7 @@
           />
       </div>
       <div
-      [ngbCollapse]="!['AFDS-23', 'AFDS-23/24', 'AFDS-24/25'].includes(initiative)"
+      [ngbCollapse]="!['AFDS-23', 'AFDS-23/24', 'AFDS-24/25', 'AFDS-25/26'].includes(initiative)"
       >
           <app-friuli
           [showError]="showError.bind(this)"
